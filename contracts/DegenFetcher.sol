@@ -146,7 +146,7 @@ contract DegenFetcher {
         uint256 fromTimestamp,
         uint80 daysToFetch,
         uint dataPointsToFetchPerDay
-    ) public view returns (int32[] memory) {
+    ) public view returns (int[] memory) {
         uint80[] memory roundIds = roundIdsToSearch(
             feed,
             fromTimestamp,
@@ -162,7 +162,7 @@ contract DegenFetcher {
         uint secondsBetweenDataPoints = SECONDS_PER_DAY /
             dataPointsToFetchPerDay;
 
-        int32[] memory prices = new int32[](dataPointsToReturn);
+        int[] memory prices = new int[](dataPointsToReturn);
 
         uint80 latestRoundId = uint80(feed.latestRound());
         for (uint80 i = 0; i < roundIds.length; i++) {
@@ -175,7 +175,7 @@ contract DegenFetcher {
                     uint segmentsSinceStart = (timestamp - fromTimestamp) /
                         secondsBetweenDataPoints;
                     if (segmentsSinceStart < prices.length) {
-                        prices[segmentsSinceStart] = int32(price / 10**8);
+                        prices[segmentsSinceStart] = price;
                     }
                 }
             }
@@ -189,17 +189,49 @@ contract DegenFetcher {
         uint fromTimestamp,
         uint80 daysToFetch,
         uint dataPointsToFetchPerDay
-    ) external view returns (int32[] memory) {
+    ) public view returns (int[] memory) {
         AggregatorV2V3Interface feed = AggregatorV2V3Interface(feedAddress);
 
         require(fromTimestamp > 0);
 
-        int32[] memory prices = fetchPriceData(
+        int256[] memory prices = fetchPriceData(
             feed,
             fromTimestamp,
             daysToFetch,
             dataPointsToFetchPerDay
         );
         return prices;
+    }
+
+    // TODO: Replace feed with symbol and store feed in editable by owner map?
+    function getMinMaxPrices(address feedAddress, uint dayStartTimestamp)
+        external
+        view
+        returns (int, int)
+    {
+        // Init params
+        uint80 daysToFetch = 1;
+        uint dataPointsToFetchPerDay = 256;
+        // Load day prices
+        int[] memory prices = fetchPriceDataForFeed(
+            feedAddress,
+            dayStartTimestamp,
+            daysToFetch,
+            dataPointsToFetchPerDay
+        );
+        // Fin min and max prices
+        int minPrice = 2**255 - 1;
+        int maxPrice = 0;
+        for (uint80 i = 0; i < prices.length; i++) {
+            int price = prices[i];
+            if (price != 0 && price < minPrice) {
+                minPrice = price;
+            }
+            if (price != 0 && price > maxPrice) {
+                maxPrice = price;
+            }
+        }
+        // Return
+        return (minPrice, maxPrice);
     }
 }
