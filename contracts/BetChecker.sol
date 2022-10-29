@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
 
-contract DegenFetcher {
+contract BetChecker {
     uint80 constant SECONDS_PER_DAY = 3600 * 24;
 
     function getPhaseForTimestamp(

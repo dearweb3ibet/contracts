@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 
 const deployedContracts: any = {
   mumbai: {
-    degenFetcher: "0x7EAd5dC591f7a5Bfd90CA23CCB75f780281e8B55",
+    betChecker: "0x11f06Bf523bec24C16424643c03946221Aa98e40",
   },
 };
 
@@ -18,13 +18,13 @@ async function main() {
   // Define deployed contracts by chain
   const chainDeployedContracts = deployedContracts[chain];
 
-  // Deploy degen fetcher contract
-  if (chainDeployedContracts.degenFetcher === "") {
-    console.log("Start deploy degen fetcher contract");
+  // Deploy bet checker contract
+  if (chainDeployedContracts.betChecker === "") {
+    console.log("Start deploy bet checker contract");
     const contract = await ethers
-      .getContractFactory("DegenFetcher")
+      .getContractFactory("BetChecker")
       .then((factory) => factory.deploy());
-    console.log("Degen fetcher contract deployed to " + contract.address);
+    console.log("Bet checker contract deployed to " + contract.address);
   }
 }
 
