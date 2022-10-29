@@ -2,5 +2,5 @@
 
 ## Commands
 
-- Install dependencies: `npm install`
+- Install dependencies - `npm install`
 - Run tests - `npx hardhat test`
