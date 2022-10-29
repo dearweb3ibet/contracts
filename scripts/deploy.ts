@@ -1,20 +1,31 @@
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
+
+const deployedContracts: any = {
+  mumbai: {
+    degenFetcher: "0x7EAd5dC591f7a5Bfd90CA23CCB75f780281e8B55",
+  },
+};
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  // Define chain
+  const chain = hre.hardhatArguments.network;
+  if (!chain) {
+    console.log("Chain is not defined");
+    return;
+  }
+  console.log("Running on chain: " + chain);
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  // Define deployed contracts by chain
+  const chainDeployedContracts = deployedContracts[chain];
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
-
-  console.log(
-    `Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+  // Deploy degen fetcher contract
+  if (chainDeployedContracts.degenFetcher === "") {
+    console.log("Start deploy degen fetcher contract");
+    const contract = await ethers
+      .getContractFactory("DegenFetcher")
+      .then((factory) => factory.deploy());
+    console.log("Degen fetcher contract deployed to " + contract.address);
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
