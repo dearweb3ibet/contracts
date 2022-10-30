@@ -1,7 +1,7 @@
 import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 
-describe.only("BetChecker", function () {
+describe("BetChecker", function () {
   // Accounts
   let account1: Signer;
   let account2: Signer;
