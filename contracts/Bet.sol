@@ -11,6 +11,7 @@ contract Bet is ERC721URIStorage {
         int minPrice;
         int maxPrice;
         uint dayStartTimestamp;
+        uint rate;
         address firstMember;
         address secondMember;
     }
@@ -29,8 +30,10 @@ contract Bet is ERC721URIStorage {
         uint dayStartTimestamp,
         uint rate
     ) public payable returns (uint256) {
-        // Check rate
+        // Check msg value
         require(msg.value == rate, "message value is incorrect");
+        // Update counter
+        _tokenIds.increment();
         // Mint token
         uint256 newTokenId = _tokenIds.current();
         _mint(msg.sender, newTokenId);
@@ -39,6 +42,7 @@ contract Bet is ERC721URIStorage {
             minPrice,
             maxPrice,
             dayStartTimestamp,
+            rate,
             msg.sender,
             address(0)
         );
@@ -49,9 +53,20 @@ contract Bet is ERC721URIStorage {
         return newTokenId;
     }
 
-    // TODO: Implement function
-    function accept() public {}
+    function accept(uint256 tokenId) public payable {
+        // Try find token params
+        Params storage tokenParams = _tokenParams[tokenId];
+        require(tokenParams.rate > 0, "token is not found");
+        // Check msg value
+        require(msg.value == tokenParams.rate, "message value is incorrect");
+        // Update params
+        tokenParams.secondMember = msg.sender;
+    }
 
     // TODO: implement function
     function verify() public {}
+
+    function getParams(uint256 tokenId) public view returns (Params memory) {
+        return _tokenParams[tokenId];
+    }
 }
