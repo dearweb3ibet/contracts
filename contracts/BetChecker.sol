@@ -203,9 +203,8 @@ contract BetChecker {
         return prices;
     }
 
-    // TODO: Replace feed with symbol and store feed in editable by owner map?
     function getMinMaxPrices(address feedAddress, uint dayStartTimestamp)
-        external
+        public
         view
         returns (int, int)
     {
@@ -233,5 +232,44 @@ contract BetChecker {
         }
         // Return
         return (minPrice, maxPrice);
+    }
+
+    // TODO: Replace feed with symbol and store feed in editable by owner map?
+    function isPriceExist(
+        address feedAddress,
+        uint dayStartTimestamp,
+        int minPrice,
+        int maxPrice
+    )
+        external
+        view
+        returns (
+            bool,
+            int,
+            int
+        )
+    {
+        // Check input data
+        require(minPrice <= maxPrice, "min price is higher than max price");
+        // Get day min and max prices
+        (int dayMinPrice, int dayMaxPrice) = getMinMaxPrices(
+            feedAddress,
+            dayStartTimestamp
+        );
+        // Compare input prices with day prices
+        bool result = false;
+        int fixedMinPrice = minPrice * 10**8;
+        int fixedMaxPrice = maxPrice * 10**8;
+        if (fixedMinPrice <= dayMinPrice && fixedMaxPrice >= dayMinPrice) {
+            result = true;
+        }
+        if (fixedMinPrice >= dayMinPrice && fixedMaxPrice <= dayMaxPrice) {
+            result = true;
+        }
+        if (fixedMinPrice <= dayMaxPrice && fixedMaxPrice >= dayMaxPrice) {
+            result = true;
+        }
+        // Return
+        return (result, dayMinPrice, dayMaxPrice);
     }
 }

@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 
 const deployedContracts: any = {
   mumbai: {
-    betChecker: "0x11f06Bf523bec24C16424643c03946221Aa98e40",
+    betChecker: "0xf8fFB77d3c3C72d11B72C67D7fc1C77b8c958cB6",
   },
 };
 
