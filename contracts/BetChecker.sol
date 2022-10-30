@@ -235,6 +235,7 @@ contract BetChecker {
     }
 
     // TODO: Replace feed with symbol and store feed in editable by owner map?
+    // TODO: Check that day has passed
     function isPriceExist(
         address feedAddress,
         uint dayStartTimestamp,
