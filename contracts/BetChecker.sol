@@ -273,4 +273,9 @@ contract BetChecker {
         // Return
         return (result, dayMinPrice, dayMaxPrice);
     }
+
+    // TODO: Delete function for production
+    function getTestString() external pure returns (string memory) {
+        return "HELLO_WORLD!";
+    }
 }

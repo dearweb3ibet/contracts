@@ -6,18 +6,32 @@ describe.only("Bet", function () {
   // Accounts
   let account1: Signer;
   let account2: Signer;
-  // Contract
-  let contract: Contract;
+  // Contracts
+  let betCheckerContract: Contract;
+  let betContract: Contract;
   // Helpful variables
   let lastTokenId = 0;
 
   before(async function () {
     // Init accounts
     [account1, account2] = await ethers.getSigners();
-    // Deploy contract
-    contract = await ethers
-      .getContractFactory("Bet")
+    // Deploy contracts
+    betCheckerContract = await ethers
+      .getContractFactory("BetChecker")
       .then((factory) => factory.deploy());
+    betContract = await ethers
+      .getContractFactory("Bet")
+      .then((factory) => factory.deploy(betCheckerContract.address));
+  });
+
+  it.only("Should check bet checker", async function () {
+    // Check bet checker contract
+    expect(await betContract.getBetCheckerAddress()).to.equal(
+      betCheckerContract.address
+    );
+    expect(await betContract.getBetCheckerTestString()).to.equal(
+      "HELLO_WORLD!"
+    );
   });
 
   it("Should create and accept bet", async function () {
@@ -28,7 +42,7 @@ describe.only("Bet", function () {
     const dayStartTimestamp = 1667088000;
     const rate = "0.01";
     await expect(
-      contract
+      betContract
         .connect(account1)
         .create(
           uri,
@@ -48,7 +62,7 @@ describe.only("Bet", function () {
     // Accept bet
     const tokenId = lastTokenId;
     await expect(
-      contract.connect(account2).accept(tokenId, {
+      betContract.connect(account2).accept(tokenId, {
         value: ethers.utils.parseEther(rate),
       })
     ).to.changeEtherBalance(
@@ -56,7 +70,7 @@ describe.only("Bet", function () {
       ethers.utils.parseEther(rate).mul(BigInt("-1"))
     );
     // Check bet params
-    const tokenParams = await contract.getParams(lastTokenId);
+    const tokenParams = await betContract.getParams(lastTokenId);
     expect(tokenParams.minPrice).to.equal(BigNumber.from(minPrice));
     expect(tokenParams.maxPrice).to.equal(BigNumber.from(maxPrice));
     expect(tokenParams.dayStartTimestamp).to.equal(

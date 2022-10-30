@@ -3,8 +3,10 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/BetCheckerInterface.sol";
 
-contract Bet is ERC721URIStorage {
+contract Bet is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
     struct Params {
@@ -19,9 +21,14 @@ contract Bet is ERC721URIStorage {
     event URISet(uint256 indexed tokenId, string tokenURI);
 
     Counters.Counter private _tokenIds;
+    address private _betCheckerAddress;
     mapping(uint256 => Params) internal _tokenParams;
 
-    constructor() ERC721("dearweb3ibet token", "DW3IBT") {}
+    constructor(address betCheckerAddress)
+        ERC721("dearweb3ibet token", "DW3IBT")
+    {
+        _betCheckerAddress = betCheckerAddress;
+    }
 
     function create(
         string memory uri,
@@ -66,7 +73,19 @@ contract Bet is ERC721URIStorage {
     // TODO: implement function
     function verify() public {}
 
+    function getBetCheckerAddress() public view returns (address) {
+        return _betCheckerAddress;
+    }
+
+    function setBetCheckerAddress(address betCheckerAddress) public onlyOwner {
+        _betCheckerAddress = betCheckerAddress;
+    }
+
     function getParams(uint256 tokenId) public view returns (Params memory) {
         return _tokenParams[tokenId];
+    }
+
+    function getBetCheckerTestString() public view returns (string memory) {
+        return BetCheckerInterface(_betCheckerAddress).getTestString();
     }
 }
