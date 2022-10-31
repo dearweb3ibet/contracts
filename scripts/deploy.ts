@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 
 const deployedContracts: any = {
   mumbai: {
-    betChecker: "0xf8fFB77d3c3C72d11B72C67D7fc1C77b8c958cB6",
+    betChecker: "0xE78Ec547bdE5697c1Dd2B32524c9a51F4385CC08",
   },
 };
 
@@ -21,9 +21,11 @@ async function main() {
   // Deploy bet checker contract
   if (chainDeployedContracts.betChecker === "") {
     console.log("Start deploy bet checker contract");
+    const feedSymbols = ["ETHUSD"];
+    const feedAddresses = ["0x0715A7794a1dc8e42615F059dD6e406A6594651A"];
     const contract = await ethers
       .getContractFactory("BetChecker")
-      .then((factory) => factory.deploy());
+      .then((factory) => factory.deploy(feedSymbols, feedAddresses));
     console.log("Bet checker contract deployed to " + contract.address);
   }
 }
