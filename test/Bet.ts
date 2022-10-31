@@ -2,7 +2,7 @@ import { BigNumber, Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
-describe.only("Bet", function () {
+describe("Bet", function () {
   // Accounts
   let account1: Signer;
   let account2: Signer;
@@ -24,7 +24,7 @@ describe.only("Bet", function () {
       .then((factory) => factory.deploy(betCheckerContract.address));
   });
 
-  it.only("Should check bet checker", async function () {
+  it("Should check bet checker", async function () {
     // Check bet checker contract
     expect(await betContract.getBetCheckerAddress()).to.equal(
       betCheckerContract.address
