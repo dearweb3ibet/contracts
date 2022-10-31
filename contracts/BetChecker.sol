@@ -262,10 +262,9 @@ contract BetChecker is Ownable {
         return (minPrice, maxPrice);
     }
 
-    // TODO: Replace feed with symbol and store feed in editable by owner map?
     // TODO: Check that day has passed
     function isPriceExist(
-        address feedAddress,
+        string memory symbol,
         uint dayStartTimestamp,
         int minPrice,
         int maxPrice
@@ -280,9 +279,13 @@ contract BetChecker is Ownable {
     {
         // Check input data
         require(minPrice <= maxPrice, "min price is higher than max price");
+        require(
+            _feedAddresses[symbol] != address(0),
+            "feed for symbol is not found"
+        );
         // Get day min and max prices
         (int dayMinPrice, int dayMaxPrice) = getMinMaxPrices(
-            feedAddress,
+            _feedAddresses[symbol],
             dayStartTimestamp
         );
         // Compare input prices with day prices
