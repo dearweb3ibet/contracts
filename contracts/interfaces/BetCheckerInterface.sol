@@ -16,5 +16,8 @@ interface BetCheckerInterface {
             int
         );
 
-    function getTestString() external pure returns (string memory);
+    function getFeedAddress(string memory feedSymbol)
+        external
+        view
+        returns (address);
 }

@@ -2,9 +2,37 @@
 pragma solidity ^0.8.9;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BetChecker {
+contract BetChecker is Ownable {
     uint80 constant SECONDS_PER_DAY = 3600 * 24;
+
+    mapping(string => address) internal _feedAddresses;
+
+    constructor(string[] memory feedSymbols, address[] memory feedAddresses) {
+        require(
+            feedSymbols.length == feedAddresses.length,
+            "lenghs of input arrays must be the same"
+        );
+        for (uint i = 0; i < feedSymbols.length; i++) {
+            _feedAddresses[feedSymbols[i]] = feedAddresses[i];
+        }
+    }
+
+    function setFeedAddress(string memory feedSymbol, address feedAddress)
+        public
+        onlyOwner
+    {
+        _feedAddresses[feedSymbol] = feedAddress;
+    }
+
+    function getFeedAddress(string memory feedSymbol)
+        external
+        view
+        returns (address)
+    {
+        return _feedAddresses[feedSymbol];
+    }
 
     function getPhaseForTimestamp(
         AggregatorV2V3Interface feed,
@@ -272,10 +300,5 @@ contract BetChecker {
         }
         // Return
         return (result, dayMinPrice, dayMaxPrice);
-    }
-
-    // TODO: Delete function for production
-    function getTestString() external pure returns (string memory) {
-        return "HELLO_WORLD!";
     }
 }

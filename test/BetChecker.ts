@@ -1,7 +1,14 @@
 import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
+import { expect } from "chai";
 
-describe.skip("BetChecker", function () {
+describe("BetChecker", function () {
+  // Constants
+  const feedSymbolEthUsd = "ETHUSD";
+  const feedSymbolBtcUsd = "BTCUSD";
+  const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
+  const feedAddressBtcUsdOne = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
+  const feedAddressBtcUsdTwo = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
   // Accounts
   let account1: Signer;
   let account2: Signer;
@@ -14,17 +21,24 @@ describe.skip("BetChecker", function () {
     // Deploy contract
     contract = await ethers
       .getContractFactory("BetChecker")
-      .then((factory) => factory.deploy());
+      .then((factory) =>
+        factory.deploy(
+          [feedSymbolEthUsd, feedSymbolBtcUsd],
+          [feedAddressEthUsd, feedAddressBtcUsdOne]
+        )
+      );
   });
 
-  // TODO: Complete test
-  it("Should check if price is exist", async function () {
-    const result = await contract.isPriceExist(
-      "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
-      1667001600,
-      1000,
-      1100
+  it("Should recheck feed address", async function () {
+    // Check address before
+    expect(await contract.getFeedAddress(feedSymbolBtcUsd)).to.equal(
+      feedAddressBtcUsdOne
     );
-    console.log("[Dev] result", result);
+    // Update address
+    await contract.setFeedAddress(feedSymbolBtcUsd, feedAddressBtcUsdTwo);
+    // Check address after
+    expect(await contract.getFeedAddress(feedSymbolBtcUsd)).to.equal(
+      feedAddressBtcUsdTwo
+    );
   });
 });

@@ -3,6 +3,9 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 
 describe("Bet", function () {
+  // Constants
+  const feedSymbolEthUsd = "ETHUSD";
+  const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
   // Accounts
   let account1: Signer;
   let account2: Signer;
@@ -18,7 +21,9 @@ describe("Bet", function () {
     // Deploy contracts
     betCheckerContract = await ethers
       .getContractFactory("BetChecker")
-      .then((factory) => factory.deploy());
+      .then((factory) =>
+        factory.deploy([feedSymbolEthUsd], [feedAddressEthUsd])
+      );
     betContract = await ethers
       .getContractFactory("Bet")
       .then((factory) => factory.deploy(betCheckerContract.address));
@@ -29,9 +34,9 @@ describe("Bet", function () {
     expect(await betContract.getBetCheckerAddress()).to.equal(
       betCheckerContract.address
     );
-    expect(await betContract.getBetCheckerTestString()).to.equal(
-      "HELLO_WORLD!"
-    );
+    expect(
+      await betContract.getBetCheckerFeedAddress(feedSymbolEthUsd)
+    ).to.equal(feedAddressEthUsd);
   });
 
   it("Should create and accept bet", async function () {

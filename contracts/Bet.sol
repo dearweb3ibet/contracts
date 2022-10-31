@@ -85,7 +85,12 @@ contract Bet is ERC721URIStorage, Ownable {
         return _tokenParams[tokenId];
     }
 
-    function getBetCheckerTestString() public view returns (string memory) {
-        return BetCheckerInterface(_betCheckerAddress).getTestString();
+    function getBetCheckerFeedAddress(string memory feedSymbol)
+        public
+        view
+        returns (address)
+    {
+        return
+            BetCheckerInterface(_betCheckerAddress).getFeedAddress(feedSymbol);
     }
 }
