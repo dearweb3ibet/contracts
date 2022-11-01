@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 interface BetCheckerInterface {
     function isPriceExist(
-        address feedAddress,
+        string memory symbol,
         uint dayStartTimestamp,
         int minPrice,
         int maxPrice
