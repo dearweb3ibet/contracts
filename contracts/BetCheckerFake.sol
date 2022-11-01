@@ -30,7 +30,7 @@ contract BetCheckerFake is BetCheckerInterface {
             int
         )
     {
-        return (false, 0, 0);
+        return (true, 0, 0);
     }
 
     function getFeedAddress(string memory feedSymbol)

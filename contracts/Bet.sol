@@ -10,12 +10,14 @@ contract Bet is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
     struct Params {
+        string symbol;
         int minPrice;
         int maxPrice;
         uint dayStartTimestamp;
         uint rate;
         address firstMember;
         address secondMember;
+        address winner;
     }
 
     event URISet(uint256 indexed tokenId, string tokenURI);
@@ -32,6 +34,7 @@ contract Bet is ERC721URIStorage, Ownable {
 
     function create(
         string memory uri,
+        string memory symbol,
         int minPrice,
         int maxPrice,
         uint dayStartTimestamp,
@@ -46,11 +49,13 @@ contract Bet is ERC721URIStorage, Ownable {
         _mint(msg.sender, newTokenId);
         // Set params
         _tokenParams[newTokenId] = Params(
+            symbol,
             minPrice,
             maxPrice,
             dayStartTimestamp,
             rate,
             msg.sender,
+            address(0),
             address(0)
         );
         // Set uri
@@ -64,14 +69,38 @@ contract Bet is ERC721URIStorage, Ownable {
         // Try find token params
         Params storage tokenParams = _tokenParams[tokenId];
         require(tokenParams.rate > 0, "token is not found");
+        require(tokenParams.winner == address(0), "token already has winner");
         // Check msg value
         require(msg.value == tokenParams.rate, "message value is incorrect");
         // Update params
         tokenParams.secondMember = msg.sender;
     }
 
-    // TODO: implement function
-    function verify() public {}
+    function verify(uint256 tokenId) public payable {
+        // Try find token params
+        Params storage tokenParams = _tokenParams[tokenId];
+        require(tokenParams.rate > 0, "token is not found");
+        require(tokenParams.winner == address(0), "token already has winner");
+        // Verify token using bet checker
+        (bool verifyResult, , ) = BetCheckerInterface(_betCheckerAddress)
+            .isPriceExist(
+                tokenParams.symbol,
+                tokenParams.dayStartTimestamp,
+                tokenParams.minPrice,
+                tokenParams.maxPrice
+            );
+        // Define winner
+        if (verifyResult) {
+            tokenParams.winner = tokenParams.firstMember;
+        } else {
+            tokenParams.winner = tokenParams.secondMember;
+        }
+        // Send winning to winner
+        (bool sent, ) = tokenParams.winner.call{value: tokenParams.rate * 2}(
+            ""
+        );
+        require(sent, "failed to send winning");
+    }
 
     function getBetCheckerAddress() public view returns (address) {
         return _betCheckerAddress;

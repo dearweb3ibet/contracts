@@ -42,6 +42,7 @@ describe("Bet", function () {
   it("Should create and accept bet", async function () {
     // Create bet
     const uri = "";
+    const symbol = "ETHUSD";
     const minPrice = 1000;
     const maxPrice = 1200;
     const dayStartTimestamp = 1667088000;
@@ -51,6 +52,7 @@ describe("Bet", function () {
         .connect(account1)
         .create(
           uri,
+          symbol,
           minPrice,
           maxPrice,
           dayStartTimestamp,
@@ -84,5 +86,31 @@ describe("Bet", function () {
     expect(tokenParams.rate).to.equal(ethers.utils.parseEther(rate));
     expect(tokenParams.firstMember).to.equal(await account1.getAddress());
     expect(tokenParams.secondMember).to.equal(await account2.getAddress());
+  });
+
+  it("Should verify bet", async function () {
+    // Define bet token rate
+    const tokenParams = await betContract.getParams(lastTokenId);
+    const tokenRate: BigNumber = tokenParams.rate;
+    // Define bet contract balance before
+    const betContractBalanceBefore: BigNumber =
+      await ethers.provider.getBalance(betContract.address);
+    // Verify bet
+    await expect(betContract.verify(lastTokenId)).to.changeEtherBalance(
+      account1,
+      tokenRate.mul(BigNumber.from(2))
+    );
+    // Define bet contract balance after
+    const betContractBalanceAfter: BigNumber = await ethers.provider.getBalance(
+      betContract.address
+    );
+    // Check bet contract balance
+    expect(betContractBalanceBefore.sub(betContractBalanceAfter)).to.equal(
+      tokenRate.mul(BigNumber.from(2))
+    );
+    // Try verify bet again
+    await expect(betContract.verify(lastTokenId)).to.be.revertedWith(
+      "token already has winner"
+    );
   });
 });
