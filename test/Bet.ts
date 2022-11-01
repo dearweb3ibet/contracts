@@ -20,7 +20,7 @@ describe("Bet", function () {
     [account1, account2] = await ethers.getSigners();
     // Deploy contracts
     betCheckerContract = await ethers
-      .getContractFactory("BetChecker")
+      .getContractFactory("BetCheckerFake")
       .then((factory) =>
         factory.deploy([feedSymbolEthUsd], [feedAddressEthUsd])
       );
