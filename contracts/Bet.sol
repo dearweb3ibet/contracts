@@ -65,6 +65,7 @@ contract Bet is ERC721URIStorage, Ownable {
         return newTokenId;
     }
 
+    // TODO: Check that second member is not first member
     function accept(uint256 tokenId) public payable {
         // Try find token params
         Params storage tokenParams = _tokenParams[tokenId];
