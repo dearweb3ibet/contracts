@@ -77,6 +77,8 @@ contract Bet is ERC721URIStorage, Ownable {
         tokenParams.secondMember = msg.sender;
     }
 
+    // TODO: Check that token has both members
+    // TODO: Emit event with winner and winning size
     function verify(uint256 tokenId) public payable {
         // Try find token params
         Params storage tokenParams = _tokenParams[tokenId];
