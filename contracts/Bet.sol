@@ -19,18 +19,21 @@ contract Bet is ERC721URIStorage, Ownable {
         address firstMember;
         address secondMember;
         address winner;
+        uint winning;
     }
 
     event URISet(uint256 indexed tokenId, string tokenURI);
 
     Counters.Counter private _tokenIds;
     address private _betCheckerAddress;
+    uint _fee;
     mapping(uint256 => Params) internal _tokenParams;
 
-    constructor(address betCheckerAddress)
+    constructor(address betCheckerAddress, uint fee)
         ERC721("dearweb3ibet token", "DW3IBT")
     {
         _betCheckerAddress = betCheckerAddress;
+        _fee = fee;
     }
 
     function create(
@@ -58,7 +61,8 @@ contract Bet is ERC721URIStorage, Ownable {
             rate,
             msg.sender,
             address(0),
-            address(0)
+            address(0),
+            0
         );
         // Set uri
         _setTokenURI(newTokenId, uri);
@@ -81,6 +85,7 @@ contract Bet is ERC721URIStorage, Ownable {
 
     // TODO: Check that token has both members
     // TODO: Emit event with winner and winning size
+    // TODO: Send fee to another contract to share it with top accounts
     function verify(uint256 tokenId) public payable {
         // Try find token params
         Params storage tokenParams = _tokenParams[tokenId];
@@ -100,10 +105,10 @@ contract Bet is ERC721URIStorage, Ownable {
         } else {
             tokenParams.winner = tokenParams.secondMember;
         }
+        // Define winning
+        tokenParams.winning = (tokenParams.rate * 2 * (100 - _fee)) / 100;
         // Send winning to winner
-        (bool sent, ) = tokenParams.winner.call{value: tokenParams.rate * 2}(
-            ""
-        );
+        (bool sent, ) = tokenParams.winner.call{value: tokenParams.winning}("");
         require(sent, "failed to send winning");
     }
 
@@ -113,6 +118,14 @@ contract Bet is ERC721URIStorage, Ownable {
 
     function setBetCheckerAddress(address betCheckerAddress) public onlyOwner {
         _betCheckerAddress = betCheckerAddress;
+    }
+
+    function getFee() public view returns (uint) {
+        return _fee;
+    }
+
+    function setFee(uint fee) public onlyOwner {
+        _fee = fee;
     }
 
     function getParams(uint256 tokenId) public view returns (Params memory) {

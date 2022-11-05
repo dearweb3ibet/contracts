@@ -6,6 +6,7 @@ describe("Bet", function () {
   // Constants
   const feedSymbolEthUsd = "ETHUSD";
   const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
+  const betContractFee = 15;
   // Accounts
   let account1: Signer;
   let account2: Signer;
@@ -18,7 +19,7 @@ describe("Bet", function () {
   before(async function () {
     // Init accounts
     [account1, account2] = await ethers.getSigners();
-    // Deploy contracts
+    // Deploy bet contracts
     betCheckerContract = await ethers
       .getContractFactory("BetCheckerFake")
       .then((factory) =>
@@ -26,7 +27,9 @@ describe("Bet", function () {
       );
     betContract = await ethers
       .getContractFactory("Bet")
-      .then((factory) => factory.deploy(betCheckerContract.address));
+      .then((factory) =>
+        factory.deploy(betCheckerContract.address, betContractFee)
+      );
   });
 
   it("Should check bet checker", async function () {
@@ -92,21 +95,24 @@ describe("Bet", function () {
     // Define bet token rate
     const tokenParams = await betContract.getParams(lastTokenId);
     const tokenRate: BigNumber = tokenParams.rate;
-    // Define bet contract balance before
-    const betContractBalanceBefore: BigNumber =
-      await ethers.provider.getBalance(betContract.address);
+    // Check bet contract balance before
+    expect(await ethers.provider.getBalance(betContract.address)).to.equal(
+      tokenRate.mul(BigNumber.from(2))
+    );
     // Verify bet
     await expect(betContract.verify(lastTokenId)).to.changeEtherBalance(
       account1,
-      tokenRate.mul(BigNumber.from(2))
+      tokenRate
+        .mul(BigNumber.from(2))
+        .mul(BigNumber.from(100 - betContractFee))
+        .div(BigNumber.from(100))
     );
-    // Define bet contract balance after
-    const betContractBalanceAfter: BigNumber = await ethers.provider.getBalance(
-      betContract.address
-    );
-    // Check bet contract balance
-    expect(betContractBalanceBefore.sub(betContractBalanceAfter)).to.equal(
-      tokenRate.mul(BigNumber.from(2))
+    // Check bet contract balance after
+    expect(await ethers.provider.getBalance(betContract.address)).to.equal(
+      tokenRate
+        .mul(BigNumber.from(2))
+        .mul(BigNumber.from(betContractFee))
+        .div(BigNumber.from(100))
     );
     // Try verify bet again
     await expect(betContract.verify(lastTokenId)).to.be.revertedWith(
