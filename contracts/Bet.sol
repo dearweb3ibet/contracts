@@ -10,6 +10,7 @@ contract Bet is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
     struct Params {
+        uint createdDate;
         string symbol;
         int minPrice;
         int maxPrice;
@@ -49,6 +50,7 @@ contract Bet is ERC721URIStorage, Ownable {
         _mint(msg.sender, newTokenId);
         // Set params
         _tokenParams[newTokenId] = Params(
+            block.timestamp,
             symbol,
             minPrice,
             maxPrice,
