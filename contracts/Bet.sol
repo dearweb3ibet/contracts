@@ -30,7 +30,7 @@ contract Bet is ERC721URIStorage, Ownable {
     mapping(uint256 => Params) internal _tokenParams;
 
     constructor(address betCheckerAddress, uint fee)
-        ERC721("dearweb3ibet token", "DW3IBT")
+        ERC721("dearweb3ibet bet", "DW3IBBET")
     {
         _betCheckerAddress = betCheckerAddress;
         _fee = fee;
