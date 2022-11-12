@@ -15,6 +15,14 @@ contract Bio is ERC721URIStorage {
     constructor() ERC721("dearweb3ibet bio", "DW3IBBIO") {}
 
     /**
+     * Get uri by owner.
+     */
+    function getURI(address owner) external view returns (string memory) {
+        uint tokenId = _bioOwners[owner];
+        return tokenURI(tokenId);
+    }
+
+    /**
      * Set uri for message sender's token. Additionally mint token if required.
      */
     function setURI(string memory tokenURI) public {

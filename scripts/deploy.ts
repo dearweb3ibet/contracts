@@ -4,7 +4,7 @@ const deployedContracts: any = {
   mumbai: {
     betChecker: "0xE78Ec547bdE5697c1Dd2B32524c9a51F4385CC08",
     bet: "0x00E76FA942fA2f52bF9D398318196924534bA83c",
-    bio: "0x020A12b6Cad41E3e24667f4B29f7450F985Cb598",
+    bio: "0x752ab4DDf258eec8857a9115fAed1E3afE1Abbe5",
   },
 };
 
