@@ -19,6 +19,7 @@ contract Bio is ERC721URIStorage {
      */
     function getURI(address owner) external view returns (string memory) {
         uint tokenId = _bioOwners[owner];
+        // TODO: Return empty string if token is not exists
         return tokenURI(tokenId);
     }
 
