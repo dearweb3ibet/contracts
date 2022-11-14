@@ -23,6 +23,7 @@ contract Bet is ERC721URIStorage, Ownable {
     }
 
     event URISet(uint256 indexed tokenId, string tokenURI);
+    event ParamsSet(uint256 indexed tokenId, Params params);
 
     Counters.Counter private _tokenIds;
     address private _betCheckerAddress;
@@ -52,7 +53,7 @@ contract Bet is ERC721URIStorage, Ownable {
         uint256 newTokenId = _tokenIds.current();
         _mint(msg.sender, newTokenId);
         // Set params
-        _tokenParams[newTokenId] = Params(
+        Params memory tokenParams = Params(
             block.timestamp,
             symbol,
             minPrice,
@@ -64,6 +65,8 @@ contract Bet is ERC721URIStorage, Ownable {
             address(0),
             0
         );
+        _tokenParams[newTokenId] = tokenParams;
+        emit ParamsSet(newTokenId, tokenParams);
         // Set uri
         _setTokenURI(newTokenId, uri);
         emit URISet(newTokenId, uri);
@@ -81,6 +84,8 @@ contract Bet is ERC721URIStorage, Ownable {
         require(msg.value == tokenParams.rate, "message value is incorrect");
         // Update params
         tokenParams.secondMember = msg.sender;
+        // Emit event
+        emit ParamsSet(tokenId, tokenParams);
     }
 
     // TODO: Check that token has both members
@@ -107,6 +112,8 @@ contract Bet is ERC721URIStorage, Ownable {
         }
         // Define winning
         tokenParams.winning = (tokenParams.rate * 2 * (100 - _fee)) / 100;
+        // Emit event
+        emit ParamsSet(tokenId, tokenParams);
         // Send winning to winner
         (bool sent, ) = tokenParams.winner.call{value: tokenParams.winning}("");
         require(sent, "failed to send winning");
