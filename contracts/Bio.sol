@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract Bio is ERC721URIStorage {
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
-
-    mapping(address => uint256) internal _bioOwners;
 
     event URISet(uint256 indexed tokenId, string tokenURI);
+
+    Counters.Counter private _tokenIds;
+    mapping(address => uint256) internal _bioOwners;
 
     constructor() ERC721("dearweb3ibet bio", "DW3IBBIO") {}
 
