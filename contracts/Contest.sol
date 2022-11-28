@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+// TODO: Add functions to get and set winners number
 contract Contest is Ownable {
     event Received(address, uint);
 

@@ -38,22 +38,19 @@ describe("Contest", function () {
           await accounts[2].getAddress(),
           await accounts[3].getAddress(),
         ])
-    )
-      .to.changeEtherBalance(
+    ).to.changeEtherBalances(
+      [
         contestContract.address,
-        contestWinningValue.mul(contestWinnersNumber).mul(BigNumber.from(-1))
-      )
-      .and.to.changeEtherBalance(
         await accounts[1].getAddress(),
-        contestWinningValue
-      )
-      .and.to.changeEtherBalance(
         await accounts[2].getAddress(),
-        contestWinningValue
-      )
-      .and.to.changeEtherBalance(
         await accounts[3].getAddress(),
-        contestWinningValue
-      );
+      ],
+      [
+        contestWinningValue.mul(contestWinnersNumber).mul(BigNumber.from(-1)),
+        contestWinningValue,
+        contestWinningValue,
+        contestWinningValue,
+      ]
+    );
   });
 });
