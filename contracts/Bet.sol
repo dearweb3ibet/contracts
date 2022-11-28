@@ -10,43 +10,59 @@ contract Bet is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
     struct Params {
-        uint createdDate;
+        uint createdTimestamp;
+        address creatorAddress;
+        uint creatorFee;
         string symbol;
-        int minPrice;
-        int maxPrice;
-        uint dayStartTimestamp;
-        uint rate;
-        address firstMember;
-        address secondMember;
-        address winner;
+        int targetMinPrice;
+        int targetMaxPrice;
+        uint targetTimestamp;
+        uint participationDeadlineTimestamp;
+        uint totalFeeForSuccess;
+        uint totalFeeForFailure;
+        bool isClosed;
+        bool isSuccessful;
+    }
+
+    struct Participant {
+        uint addedTimestamp;
+        address accountAddress;
+        uint fee;
+        bool isFeeForSuccess;
         uint winning;
     }
 
     event URISet(uint256 indexed tokenId, string tokenURI);
     event ParamsSet(uint256 indexed tokenId, Params params);
+    event ParticipantSet(uint256 indexed tokenId, Participant participant);
 
-    Counters.Counter private _tokenIds;
     address private _betCheckerAddress;
     uint _fee;
+    Counters.Counter private _tokenIds;
     mapping(uint256 => Params) internal _tokenParams;
+    mapping(uint256 => Participant[]) internal _tokenParticipants;
 
-    constructor(address betCheckerAddress, uint fee)
-        ERC721("dearweb3ibet bet", "DW3IBBET")
-    {
+    constructor(
+        address betCheckerAddress,
+        uint fee
+    ) ERC721("dearweb3ibet bet", "DW3IBBET") {
         _betCheckerAddress = betCheckerAddress;
         _fee = fee;
     }
 
+    // TODO: Check that target timestamp is not passed
+    // TODO: Check that participation deadline timestamp is not passed
     function create(
         string memory uri,
+        uint fee,
         string memory symbol,
-        int minPrice,
-        int maxPrice,
-        uint dayStartTimestamp,
-        uint rate
+        int targetMinPrice,
+        int targetMaxPrice,
+        uint targetTimestamp,
+        uint participationDeadlineTimestamp
     ) public payable returns (uint256) {
-        // Check msg value
-        require(msg.value == rate, "message value is incorrect");
+        // Checks
+        require(msg.value == fee, "message value is not equal to fee");
         // Update counter
         _tokenIds.increment();
         // Mint token
@@ -55,18 +71,30 @@ contract Bet is ERC721URIStorage, Ownable {
         // Set params
         Params memory tokenParams = Params(
             block.timestamp,
-            symbol,
-            minPrice,
-            maxPrice,
-            dayStartTimestamp,
-            rate,
             msg.sender,
-            address(0),
-            address(0),
-            0
+            fee,
+            symbol,
+            targetMinPrice,
+            targetMaxPrice,
+            targetTimestamp,
+            participationDeadlineTimestamp,
+            fee,
+            0,
+            false,
+            false
         );
         _tokenParams[newTokenId] = tokenParams;
         emit ParamsSet(newTokenId, tokenParams);
+        // Add participant
+        Participant memory tokenParticipant = Participant(
+            block.timestamp,
+            msg.sender,
+            fee,
+            true,
+            0
+        );
+        _tokenParticipants[newTokenId].push(tokenParticipant);
+        emit ParticipantSet(newTokenId, tokenParticipant);
         // Set uri
         _setTokenURI(newTokenId, uri);
         emit URISet(newTokenId, uri);
@@ -74,49 +102,83 @@ contract Bet is ERC721URIStorage, Ownable {
         return newTokenId;
     }
 
-    // TODO: Check that second member is not first member
-    function accept(uint256 tokenId) public payable {
-        // Try find token params
+    // TODO: Check that bet is not closed
+    // TODO: Check that message sender is not bet participant
+    // TODO: Check that participation deadline timestamp allows to take part
+    function takePart(
+        uint256 tokenId,
+        uint fee,
+        bool isFeeForSuccess
+    ) public payable {
+        // Checks
+        require(_exists(tokenId), "token is not exists");
+        require(msg.value == fee, "message value is not equal to fee");
+        // Add participant
+        Participant memory tokenParticipant = Participant(
+            block.timestamp,
+            msg.sender,
+            fee,
+            isFeeForSuccess,
+            0
+        );
+        _tokenParticipants[tokenId].push(tokenParticipant);
+        emit ParticipantSet(tokenId, tokenParticipant);
+        // Update token params
         Params storage tokenParams = _tokenParams[tokenId];
-        require(tokenParams.rate > 0, "token is not found");
-        require(tokenParams.winner == address(0), "token already has winner");
-        // Check msg value
-        require(msg.value == tokenParams.rate, "message value is incorrect");
-        // Update params
-        tokenParams.secondMember = msg.sender;
-        // Emit event
+        if (isFeeForSuccess) {
+            tokenParams.totalFeeForSuccess += fee;
+        } else {
+            tokenParams.totalFeeForFailure += fee;
+        }
         emit ParamsSet(tokenId, tokenParams);
     }
 
-    // TODO: Check that token has both members
-    // TODO: Emit event with winner and winning size
-    // TODO: Send fee to another contract to share it with top accounts
-    function verify(uint256 tokenId) public payable {
-        // Try find token params
+    // TODO: Check that bet is not closed
+    // TODO: Check that target date allows close bet
+    // TODO: Send part of fee to contest contract
+    // TODO: Check that the dividing to calculate winning works fine for all values
+    function close(uint256 tokenId) public {
+        // Checks
+        require(_exists(tokenId), "token is not exists");
+        // Define whether a bet is successful or not
         Params storage tokenParams = _tokenParams[tokenId];
-        require(tokenParams.rate > 0, "token is not found");
-        require(tokenParams.winner == address(0), "token already has winner");
-        // Verify token using bet checker
-        (bool verifyResult, , ) = BetCheckerInterface(_betCheckerAddress)
+        (bool isBetSuccessful, , ) = BetCheckerInterface(_betCheckerAddress)
             .isPriceExist(
                 tokenParams.symbol,
-                tokenParams.dayStartTimestamp,
-                tokenParams.minPrice,
-                tokenParams.maxPrice
+                tokenParams.targetTimestamp,
+                tokenParams.targetMinPrice,
+                tokenParams.targetMaxPrice
             );
-        // Define winner
-        if (verifyResult) {
-            tokenParams.winner = tokenParams.firstMember;
-        } else {
-            tokenParams.winner = tokenParams.secondMember;
-        }
-        // Define winning
-        tokenParams.winning = (tokenParams.rate * 2 * (100 - _fee)) / 100;
-        // Emit event
+        // Update token params
+        tokenParams.isClosed = true;
+        tokenParams.isSuccessful = isBetSuccessful;
         emit ParamsSet(tokenId, tokenParams);
-        // Send winning to winner
-        (bool sent, ) = tokenParams.winner.call{value: tokenParams.winning}("");
-        require(sent, "failed to send winning");
+        // Send fee and winning to winners
+        for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
+            Participant storage participant = _tokenParticipants[tokenId][i];
+            // Calculate winning
+            uint winning = 0;
+            if (participant.isFeeForSuccess && isBetSuccessful) {
+                winning =
+                    (participant.fee * tokenParams.totalFeeForFailure) /
+                    tokenParams.totalFeeForSuccess;
+            }
+            if (!participant.isFeeForSuccess && !isBetSuccessful) {
+                winning =
+                    (participant.fee * tokenParams.totalFeeForSuccess) /
+                    tokenParams.totalFeeForFailure;
+            }
+            if (winning != 0) {
+                // Save winning
+                participant.winning = winning;
+                emit ParticipantSet(tokenId, participant);
+                // Send fee and winning
+                (bool sent, ) = participant.accountAddress.call{
+                    value: (participant.fee + winning)
+                }("");
+                require(sent, "failed to send fee and winning");
+            }
+        }
     }
 
     function getBetCheckerAddress() public view returns (address) {
@@ -139,11 +201,15 @@ contract Bet is ERC721URIStorage, Ownable {
         return _tokenParams[tokenId];
     }
 
-    function getBetCheckerFeedAddress(string memory feedSymbol)
-        public
-        view
-        returns (address)
-    {
+    function getParticipants(
+        uint256 tokenId
+    ) public view returns (Participant[] memory) {
+        return _tokenParticipants[tokenId];
+    }
+
+    function getBetCheckerFeedAddress(
+        string memory feedSymbol
+    ) public view returns (address) {
         return
             BetCheckerInterface(_betCheckerAddress).getFeedAddress(feedSymbol);
     }
