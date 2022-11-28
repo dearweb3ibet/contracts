@@ -16,28 +16,21 @@ contract BetCheckerFake is BetCheckerInterface {
         }
     }
 
+    /**
+     * Return always a negative checking result.
+     */
     function isPriceExist(
         string memory symbol,
         uint dayStartTimestamp,
         int minPrice,
         int maxPrice
-    )
-        external
-        view
-        returns (
-            bool,
-            int,
-            int
-        )
-    {
-        return (true, 0, 0);
+    ) external view returns (bool, int, int) {
+        return (false, 0, 0);
     }
 
-    function getFeedAddress(string memory feedSymbol)
-        external
-        view
-        returns (address)
-    {
+    function getFeedAddress(
+        string memory feedSymbol
+    ) external view returns (address) {
         return _feedAddresses[feedSymbol];
     }
 }
