@@ -18,8 +18,8 @@ contract Bet is ERC721URIStorage, Ownable {
         int targetMaxPrice;
         uint targetTimestamp;
         uint participationDeadlineTimestamp;
-        uint totalFeeForSuccess;
-        uint totalFeeForFailure;
+        uint feeForSuccess;
+        uint feeForFailure;
         bool isClosed;
         bool isSuccessful;
     }
@@ -37,17 +37,20 @@ contract Bet is ERC721URIStorage, Ownable {
     event ParticipantSet(uint256 indexed tokenId, Participant participant);
 
     address private _betCheckerAddress;
-    uint _fee;
+    address private _contestAddress;
+    uint _contestFeePercent;
     Counters.Counter private _tokenIds;
     mapping(uint256 => Params) internal _tokenParams;
     mapping(uint256 => Participant[]) internal _tokenParticipants;
 
     constructor(
         address betCheckerAddress,
-        uint fee
+        address contestAddress,
+        uint contestFeePercent
     ) ERC721("dearweb3ibet bet", "DW3IBBET") {
         _betCheckerAddress = betCheckerAddress;
-        _fee = fee;
+        _contestAddress = contestAddress;
+        _contestFeePercent = contestFeePercent;
     }
 
     // TODO: Check that target timestamp is not passed
@@ -126,17 +129,15 @@ contract Bet is ERC721URIStorage, Ownable {
         // Update token params
         Params storage tokenParams = _tokenParams[tokenId];
         if (isFeeForSuccess) {
-            tokenParams.totalFeeForSuccess += fee;
+            tokenParams.feeForSuccess += fee;
         } else {
-            tokenParams.totalFeeForFailure += fee;
+            tokenParams.feeForFailure += fee;
         }
         emit ParamsSet(tokenId, tokenParams);
     }
 
     // TODO: Check that bet is not closed
     // TODO: Check that target date allows close bet
-    // TODO: Send part of fee to contest contract
-    // TODO: Check that the dividing to calculate winning works fine for all values
     function close(uint256 tokenId) public {
         // Checks
         require(_exists(tokenId), "token is not exists");
@@ -153,30 +154,48 @@ contract Bet is ERC721URIStorage, Ownable {
         tokenParams.isClosed = true;
         tokenParams.isSuccessful = isBetSuccessful;
         emit ParamsSet(tokenId, tokenParams);
+        // Define fees for contest and winners
+        uint feeForContest;
+        uint feeForWinners;
+        if (isBetSuccessful) {
+            feeForContest =
+                (tokenParams.feeForFailure * _contestFeePercent) /
+                100;
+            feeForWinners = tokenParams.feeForFailure - feeForContest;
+        } else {
+            feeForContest =
+                (tokenParams.feeForSuccess * _contestFeePercent) /
+                100;
+            feeForWinners = tokenParams.feeForSuccess - feeForContest;
+        }
+        // Send fee to contest contract
+        bool sent;
+        (sent, ) = _contestAddress.call{value: feeForContest}("");
+        require(sent, "failed to send fee to contest");
         // Send fee and winning to winners
         for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
             Participant storage participant = _tokenParticipants[tokenId][i];
             // Calculate winning
-            uint winning = 0;
+            uint winning;
             if (participant.isFeeForSuccess && isBetSuccessful) {
                 winning =
-                    (participant.fee * tokenParams.totalFeeForFailure) /
-                    tokenParams.totalFeeForSuccess;
+                    (participant.fee * feeForWinners) /
+                    tokenParams.feeForSuccess;
             }
             if (!participant.isFeeForSuccess && !isBetSuccessful) {
                 winning =
-                    (participant.fee * tokenParams.totalFeeForSuccess) /
-                    tokenParams.totalFeeForFailure;
+                    (participant.fee * feeForWinners) /
+                    tokenParams.feeForFailure;
             }
             if (winning != 0) {
                 // Save winning
                 participant.winning = winning;
                 emit ParticipantSet(tokenId, participant);
                 // Send fee and winning
-                (bool sent, ) = participant.accountAddress.call{
+                (sent, ) = participant.accountAddress.call{
                     value: (participant.fee + winning)
                 }("");
-                require(sent, "failed to send fee and winning");
+                require(sent, "failed to send fee and winning to winners");
             }
         }
     }
@@ -189,12 +208,20 @@ contract Bet is ERC721URIStorage, Ownable {
         _betCheckerAddress = betCheckerAddress;
     }
 
-    function getFee() public view returns (uint) {
-        return _fee;
+    function getContestAddress() public view returns (address) {
+        return _contestAddress;
     }
 
-    function setFee(uint fee) public onlyOwner {
-        _fee = fee;
+    function setContestAddress(address contestAddress) public onlyOwner {
+        _contestAddress = contestAddress;
+    }
+
+    function getContestFeePercent() public view returns (uint) {
+        return _contestFeePercent;
+    }
+
+    function setContestFeePercent(uint contestFeePercent) public onlyOwner {
+        _contestFeePercent = contestFeePercent;
     }
 
     function getParams(uint256 tokenId) public view returns (Params memory) {

@@ -6,7 +6,8 @@ describe("Bet", function () {
   // Constants
   const feedSymbolEthUsd = "ETHUSD";
   const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
-  const betContractFee = 15;
+  const contestFeePercent = 15;
+  const contestWinnersNumber = 3;
   const betParams = {
     uri: "",
     symbol: "ETHUSD",
@@ -37,16 +38,17 @@ describe("Bet", function () {
       isFeeForSuccess: true,
     },
   };
-  const betTotalFeeForSuccess = betParticipants.creator.fee.add(
+  const betFeeForSuccess = betParticipants.creator.fee.add(
     betParticipants.fourth.fee
   );
-  const betTotalFeeForFailure = betParticipants.second.fee.add(
+  const betFeeForFailure = betParticipants.second.fee.add(
     betParticipants.third.fee
   );
   // Accounts
   let accounts: Array<Signer>;
   // Contracts
   let betCheckerContract: Contract;
+  let contestContract: Contract;
   let betContract: Contract;
   // Helpful variables
   let lastTokenId = 0;
@@ -60,10 +62,17 @@ describe("Bet", function () {
       .then((factory) =>
         factory.deploy([feedSymbolEthUsd], [feedAddressEthUsd])
       );
+    contestContract = await ethers
+      .getContractFactory("Contest")
+      .then((factory) => factory.deploy(contestWinnersNumber));
     betContract = await ethers
       .getContractFactory("Bet")
       .then((factory) =>
-        factory.deploy(betCheckerContract.address, betContractFee)
+        factory.deploy(
+          betCheckerContract.address,
+          contestContract.address,
+          contestFeePercent
+        )
       );
   });
 
@@ -141,8 +150,8 @@ describe("Bet", function () {
     }
     // Check bet params
     const params = await betContract.getParams(lastTokenId);
-    expect(params.totalFeeForSuccess).to.equal(betTotalFeeForSuccess);
-    expect(params.totalFeeForFailure).to.equal(betTotalFeeForFailure);
+    expect(params.feeForSuccess).to.equal(betFeeForSuccess);
+    expect(params.feeForFailure).to.equal(betFeeForFailure);
     // Check bet participants
     const participants = await betContract.getParticipants(lastTokenId);
     expect(participants.length).to.equal(Object.values(betParticipants).length);
@@ -158,29 +167,34 @@ describe("Bet", function () {
 
   it("Should close bet", async function () {
     // Define data
+    const feeForContest = betFeeForSuccess
+      .mul(contestFeePercent)
+      .div(BigNumber.from(100));
+    const feeForWinners = betFeeForSuccess.sub(feeForContest);
     const account2Winning = betParticipants.second.fee
-      .mul(betTotalFeeForSuccess)
-      .div(betTotalFeeForFailure);
+      .mul(feeForWinners)
+      .div(betFeeForFailure);
     const account3Winning = betParticipants.third.fee
-      .mul(betTotalFeeForSuccess)
-      .div(betTotalFeeForFailure);
+      .mul(feeForWinners)
+      .div(betFeeForFailure);
     const contractBalance = betParticipants.creator.fee
       .add(betParticipants.second.fee)
       .add(betParticipants.third.fee)
       .add(betParticipants.fourth.fee);
     // Close bet and check balances
-    await expect(betContract.connect(accounts[0]).close(lastTokenId))
-      .to.changeEtherBalance(
+    await expect(
+      betContract.connect(accounts[0]).close(lastTokenId)
+    ).to.changeEtherBalances(
+      [
         accounts[betParticipants.second.accountIndex],
-        betParticipants.second.fee.add(account2Winning)
-      )
-      .to.changeEtherBalance(
         accounts[betParticipants.third.accountIndex],
-        betParticipants.third.fee.add(account3Winning)
-      )
-      .and.to.changeEtherBalance(
         betContract.address,
-        contractBalance.mul(BigNumber.from(-1))
-      );
+      ],
+      [
+        betParticipants.second.fee.add(account2Winning),
+        betParticipants.third.fee.add(account3Winning),
+        contractBalance.mul(BigNumber.from(-1)),
+      ]
+    );
   });
 });
