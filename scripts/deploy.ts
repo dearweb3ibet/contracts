@@ -4,7 +4,7 @@ const deployedContracts: any = {
   mumbai: {
     betChecker: "0xE78Ec547bdE5697c1Dd2B32524c9a51F4385CC08",
     contest: "0xD09601e5a806c177483cA0F6deBf47f9D6B30cE7",
-    bet: "0xa06D8a9d29050Cb2fc8CC03eAce0c1c155BF16B3",
+    bet: "0x8b89d0f890E3E848fcabe257695d1B5Bc64abCFA",
     bio: "0x752ab4DDf258eec8857a9115fAed1E3afE1Abbe5",
   },
 };
@@ -44,14 +44,19 @@ async function main() {
 
   if (
     chainDeployedContracts.bet === "" &&
-    chainDeployedContracts.betChecker !== ""
+    chainDeployedContracts.betChecker !== "" &&
+    chainDeployedContracts.contest !== ""
   ) {
     console.log("Start deploy bet contract");
-    const fee = 15;
+    const contestFeePercent = 15;
     const contract = await ethers
       .getContractFactory("Bet")
       .then((factory) =>
-        factory.deploy(chainDeployedContracts.betChecker, fee)
+        factory.deploy(
+          chainDeployedContracts.betChecker,
+          chainDeployedContracts.contest,
+          contestFeePercent
+        )
       );
     console.log("Bet contract deployed to " + contract.address);
   }
