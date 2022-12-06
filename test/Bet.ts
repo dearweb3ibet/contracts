@@ -7,6 +7,7 @@ describe("Bet", function () {
   const feedSymbolEthUsd = "ETHUSD";
   const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
   const contestFeePercent = 15;
+  const usageFeePercent = 10;
   const contestWinnersNumber = 3;
   const betParams = {
     uri: "",
@@ -49,6 +50,7 @@ describe("Bet", function () {
   // Contracts
   let betCheckerContract: Contract;
   let contestContract: Contract;
+  let usageContract: Contract;
   let betContract: Contract;
   // Helpful variables
   let lastTokenId = 0;
@@ -65,13 +67,18 @@ describe("Bet", function () {
     contestContract = await ethers
       .getContractFactory("Contest")
       .then((factory) => factory.deploy(contestWinnersNumber));
+    usageContract = await ethers
+      .getContractFactory("Usage")
+      .then((factory) => factory.deploy());
     betContract = await ethers
       .getContractFactory("Bet")
       .then((factory) =>
         factory.deploy(
           betCheckerContract.address,
           contestContract.address,
-          contestFeePercent
+          usageContract.address,
+          contestFeePercent,
+          usageFeePercent
         )
       );
   });
@@ -102,9 +109,12 @@ describe("Bet", function () {
             value: betParticipants.creator.fee,
           }
         )
-    ).to.changeEtherBalance(
-      accounts[betParticipants.creator.accountIndex],
-      betParticipants.creator.fee.mul(BigNumber.from(-1))
+    ).to.changeEtherBalances(
+      [accounts[betParticipants.creator.accountIndex], betContract.address],
+      [
+        betParticipants.creator.fee.mul(ethers.constants.NegativeOne),
+        betParticipants.creator.fee,
+      ]
     );
     lastTokenId += 1;
     // Check bet params
@@ -145,7 +155,7 @@ describe("Bet", function () {
           })
       ).to.changeEtherBalance(
         accounts[participant.accountIndex],
-        participant.fee.mul(BigNumber.from(-1))
+        participant.fee.mul(ethers.constants.NegativeOne)
       );
     }
     // Check bet params
@@ -170,7 +180,10 @@ describe("Bet", function () {
     const feeForContest = betFeeForSuccess
       .mul(contestFeePercent)
       .div(BigNumber.from(100));
-    const feeForWinners = betFeeForSuccess.sub(feeForContest);
+    const feeForUsage = betFeeForSuccess
+      .mul(usageFeePercent)
+      .div(BigNumber.from(100));
+    const feeForWinners = betFeeForSuccess.sub(feeForContest).sub(feeForUsage);
     const account2Winning = betParticipants.second.fee
       .mul(feeForWinners)
       .div(betFeeForFailure);
@@ -189,11 +202,15 @@ describe("Bet", function () {
         accounts[betParticipants.second.accountIndex],
         accounts[betParticipants.third.accountIndex],
         betContract.address,
+        contestContract.address,
+        usageContract.address,
       ],
       [
         betParticipants.second.fee.add(account2Winning),
         betParticipants.third.fee.add(account3Winning),
-        contractBalance.mul(BigNumber.from(-1)),
+        contractBalance.mul(ethers.constants.NegativeOne),
+        feeForContest,
+        feeForUsage,
       ]
     );
   });

@@ -38,7 +38,9 @@ contract Bet is ERC721URIStorage, Ownable {
 
     address private _betCheckerAddress;
     address private _contestAddress;
+    address private _usageAddress;
     uint _contestFeePercent;
+    uint _usageFeePercent;
     Counters.Counter private _tokenIds;
     mapping(uint256 => Params) internal _tokenParams;
     mapping(uint256 => Participant[]) internal _tokenParticipants;
@@ -46,11 +48,15 @@ contract Bet is ERC721URIStorage, Ownable {
     constructor(
         address betCheckerAddress,
         address contestAddress,
-        uint contestFeePercent
+        address usageAddress,
+        uint contestFeePercent,
+        uint usageFeePercent
     ) ERC721("dearweb3ibet bet", "DW3IBBET") {
         _betCheckerAddress = betCheckerAddress;
         _contestAddress = contestAddress;
+        _usageAddress = usageAddress;
         _contestFeePercent = contestFeePercent;
+        _usageFeePercent = usageFeePercent;
     }
 
     // TODO: Check that target timestamp is not passed
@@ -154,24 +160,36 @@ contract Bet is ERC721URIStorage, Ownable {
         tokenParams.isClosed = true;
         tokenParams.isSuccessful = isBetSuccessful;
         emit ParamsSet(tokenId, tokenParams);
-        // Define fees for contest and winners
+        // Define fees for contest, usage and winners
         uint feeForContest;
+        uint feeForUsage;
         uint feeForWinners;
         if (isBetSuccessful) {
             feeForContest =
                 (tokenParams.feeForFailure * _contestFeePercent) /
                 100;
-            feeForWinners = tokenParams.feeForFailure - feeForContest;
+            feeForUsage = (tokenParams.feeForFailure * _usageFeePercent) / 100;
+            feeForWinners =
+                tokenParams.feeForFailure -
+                feeForContest -
+                feeForUsage;
         } else {
             feeForContest =
                 (tokenParams.feeForSuccess * _contestFeePercent) /
                 100;
-            feeForWinners = tokenParams.feeForSuccess - feeForContest;
+            feeForUsage = (tokenParams.feeForSuccess * _usageFeePercent) / 100;
+            feeForWinners =
+                tokenParams.feeForSuccess -
+                feeForContest -
+                feeForUsage;
         }
         // Send fee to contest contract
         bool sent;
         (sent, ) = _contestAddress.call{value: feeForContest}("");
         require(sent, "failed to send fee to contest");
+        // Send fee to usage contract
+        (sent, ) = _usageAddress.call{value: feeForUsage}("");
+        require(sent, "failed to send fee to usage");
         // Send fee and winning to winners
         for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
             Participant storage participant = _tokenParticipants[tokenId][i];
@@ -216,12 +234,28 @@ contract Bet is ERC721URIStorage, Ownable {
         _contestAddress = contestAddress;
     }
 
+    function getUsageAddress() public view returns (address) {
+        return _usageAddress;
+    }
+
+    function setUsageAddress(address usageAddress) public onlyOwner {
+        _usageAddress = usageAddress;
+    }
+
     function getContestFeePercent() public view returns (uint) {
         return _contestFeePercent;
     }
 
     function setContestFeePercent(uint contestFeePercent) public onlyOwner {
         _contestFeePercent = contestFeePercent;
+    }
+
+    function getUsageFeePercent() public view returns (uint) {
+        return _usageFeePercent;
+    }
+
+    function setUsageFeePercent(uint usageFeePercent) public onlyOwner {
+        _usageFeePercent = usageFeePercent;
     }
 
     function getParams(uint256 tokenId) public view returns (Params memory) {
