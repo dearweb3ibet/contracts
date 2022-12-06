@@ -46,7 +46,9 @@ describe("Contest", function () {
         await accounts[3].getAddress(),
       ],
       [
-        contestWinningValue.mul(contestWinnersNumber).mul(BigNumber.from(-1)),
+        contestWinningValue
+          .mul(contestWinnersNumber)
+          .mul(ethers.constants.NegativeOne),
         contestWinningValue,
         contestWinningValue,
         contestWinningValue,
