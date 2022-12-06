@@ -60,7 +60,7 @@ async function main() {
   ) {
     console.log("Start deploy bet contract");
     const contestFeePercent = 15;
-    const usageFeePercent = 15;
+    const usageFeePercent = 10;
     const contract = await ethers
       .getContractFactory("Bet")
       .then((factory) =>

@@ -13,7 +13,7 @@
 //   "0xD09601e5a806c177483cA0F6deBf47f9D6B30cE7",
 //   "0xD67c41DE6FE17e13060A7c7534aFCD4CD5c4afcB",
 //   15,
-//   15,
+//   10,
 // ];
 
 // Bio contract
