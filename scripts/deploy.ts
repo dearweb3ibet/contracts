@@ -4,7 +4,8 @@ const deployedContracts: any = {
   mumbai: {
     betChecker: "0xE78Ec547bdE5697c1Dd2B32524c9a51F4385CC08",
     contest: "0xD09601e5a806c177483cA0F6deBf47f9D6B30cE7",
-    bet: "0x8b89d0f890E3E848fcabe257695d1B5Bc64abCFA",
+    usage: "0xD67c41DE6FE17e13060A7c7534aFCD4CD5c4afcB",
+    bet: "0x9E5fA82C9a529c1d7Bd59D3D7AfF597D2948f744",
     bio: "0x752ab4DDf258eec8857a9115fAed1E3afE1Abbe5",
   },
 };
@@ -42,20 +43,33 @@ async function main() {
     console.log("Contest contract deployed to " + contract.address);
   }
 
+  // Deploy usage contract
+  if (chainDeployedContracts.usage === "") {
+    console.log("Start deploy usage contract");
+    const contract = await ethers
+      .getContractFactory("Usage")
+      .then((factory) => factory.deploy());
+    console.log("Usage contract deployed to " + contract.address);
+  }
+
   if (
     chainDeployedContracts.bet === "" &&
     chainDeployedContracts.betChecker !== "" &&
-    chainDeployedContracts.contest !== ""
+    chainDeployedContracts.contest !== "" &&
+    chainDeployedContracts.usage !== ""
   ) {
     console.log("Start deploy bet contract");
     const contestFeePercent = 15;
+    const usageFeePercent = 15;
     const contract = await ethers
       .getContractFactory("Bet")
       .then((factory) =>
         factory.deploy(
           chainDeployedContracts.betChecker,
           chainDeployedContracts.contest,
-          contestFeePercent
+          chainDeployedContracts.usage,
+          contestFeePercent,
+          usageFeePercent
         )
       );
     console.log("Bet contract deployed to " + contract.address);
