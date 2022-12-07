@@ -10,7 +10,7 @@ async function main() {
   }
   console.log("Running on chain: " + chain);
 
-  // Define deployed contracts by chain
+  // Define deployed contracts and arguments by chain
   const chainDeployedContracts = deployedContracts[chain];
   const chainContractArguments = contractArguments[chain];
 
