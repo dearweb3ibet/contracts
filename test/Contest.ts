@@ -5,9 +5,10 @@ import { expect } from "chai";
 describe("Contest", function () {
   // Constants
   const contestBalance = BigNumber.from("100000000000000000");
-  const contestWinnersNumber = 3;
+  const contestWaveEndTimestamp = 1673049600;
+  const contestWaveWinnersNumber = 3;
   const contestWinningValue = contestBalance.div(
-    BigNumber.from(contestWinnersNumber)
+    BigNumber.from(contestWaveWinnersNumber)
   );
   // Accounts
   let accounts: Array<Signer>;
@@ -20,20 +21,37 @@ describe("Contest", function () {
     // Init contracts
     contestContract = await ethers
       .getContractFactory("Contest")
-      .then((factory) => factory.deploy(contestWinnersNumber));
+      .then((factory) => factory.deploy());
   });
 
-  it("Should send winnings", async function () {
-    // Send ethers to contest contract
-    await accounts[0].sendTransaction({
-      to: contestContract.address,
-      value: ethers.utils.parseEther("0.1"),
-    });
-    // Send winnings
+  it("Should start and close wave", async function () {
+    // Start wave
     await expect(
       contestContract
         .connect(accounts[0])
-        .sendWinnings([
+        .startWave(contestWaveEndTimestamp, contestWaveWinnersNumber)
+    ).to.be.not.reverted;
+    // Start wave (second try)
+    await expect(
+      contestContract
+        .connect(accounts[0])
+        .startWave(contestWaveEndTimestamp, contestWaveWinnersNumber)
+    ).to.be.revertedWith("last wave is not closed");
+    // Send ethers to contest contract
+    await expect(
+      accounts[0].sendTransaction({
+        to: contestContract.address,
+        value: contestBalance,
+      })
+    ).to.changeEtherBalances(
+      [accounts[0], contestContract.address],
+      [contestBalance.mul(ethers.constants.NegativeOne), contestBalance]
+    );
+    // Close wave
+    await expect(
+      contestContract
+        .connect(accounts[0])
+        .closeLastWave([
           await accounts[1].getAddress(),
           await accounts[2].getAddress(),
           await accounts[3].getAddress(),
@@ -47,12 +65,22 @@ describe("Contest", function () {
       ],
       [
         contestWinningValue
-          .mul(contestWinnersNumber)
+          .mul(contestWaveWinnersNumber)
           .mul(ethers.constants.NegativeOne),
         contestWinningValue,
         contestWinningValue,
         contestWinningValue,
       ]
     );
+    // Close wave (second try)
+    await expect(
+      contestContract
+        .connect(accounts[0])
+        .closeLastWave([
+          await accounts[1].getAddress(),
+          await accounts[2].getAddress(),
+          await accounts[3].getAddress(),
+        ])
+    ).to.be.revertedWith("last wave is already closed");
   });
 });

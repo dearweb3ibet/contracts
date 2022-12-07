@@ -8,7 +8,6 @@ describe("Bet", function () {
   const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
   const contestFeePercent = 15;
   const usageFeePercent = 10;
-  const contestWinnersNumber = 3;
   const betParams = {
     uri: "",
     symbol: "ETHUSD",
@@ -66,7 +65,7 @@ describe("Bet", function () {
       );
     contestContract = await ethers
       .getContractFactory("Contest")
-      .then((factory) => factory.deploy(contestWinnersNumber));
+      .then((factory) => factory.deploy());
     usageContract = await ethers
       .getContractFactory("Usage")
       .then((factory) => factory.deploy());

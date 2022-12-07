@@ -3,29 +3,71 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-// TODO: Add functions to get and set winners number
 contract Contest is Ownable {
     event Received(address, uint);
 
-    uint _winnersNumber;
-
-    constructor(uint winnersNumber) {
-        _winnersNumber = winnersNumber;
+    struct Wave {
+        uint startTimestamp;
+        uint endTimestamp;
+        uint closeTimestamp;
+        uint winnersNumber;
+        uint winning;
+        address[] winners;
     }
 
-    function sendWinnings(address[] memory winners) public onlyOwner {
+    uint private _wavesNumber;
+    mapping(uint256 => Wave) private _waves;
+
+    function startWave(uint endTimestamp, uint winnersNumber) public onlyOwner {
         // Checks
-        require(address(this).balance > 0, "contract balance is zero");
         require(
-            winners.length == _winnersNumber,
-            "length of winners array is incorrect"
+            _wavesNumber == 0 ||
+                (_wavesNumber != 0 &&
+                    _waves[_wavesNumber - 1].closeTimestamp != 0),
+            "last wave is not closed"
         );
+        // Create wave
+        Wave storage wave = _waves[_wavesNumber++];
+        wave.startTimestamp = block.timestamp;
+        wave.endTimestamp = endTimestamp;
+        wave.winnersNumber = winnersNumber;
+    }
+
+    // TODO: Check that end date allows to close last wave
+    function closeLastWave(address[] memory winners) public onlyOwner {
+        // Checks
+        require(_wavesNumber > 0, "waves list is empty");
+        require(
+            _waves[_wavesNumber - 1].closeTimestamp == 0,
+            "last wave is already closed"
+        );
+        require(
+            winners.length == _waves[_wavesNumber - 1].winnersNumber,
+            "number of winners is incorrect"
+        );
+        // Close wave
+        Wave storage wave = _waves[_wavesNumber - 1];
+        wave.closeTimestamp = block.timestamp;
+        wave.winning = address(this).balance;
+        wave.winners = winners;
         // Send winnings
-        uint winningValue = address(this).balance / _winnersNumber;
+        uint winningValue = address(this).balance / wave.winnersNumber;
         for (uint i = 0; i < winners.length; i++) {
             (bool sent, ) = winners[i].call{value: winningValue}("");
-            require(sent, "failed to send fee and winning");
+            require(sent, "failed to send winning");
         }
+    }
+
+    function getWavesNumber() public view returns (uint) {
+        return _wavesNumber;
+    }
+
+    function getWave(uint index) public view returns (Wave memory) {
+        return _waves[index];
+    }
+
+    function getLastWave() public view returns (Wave memory) {
+        return _waves[_wavesNumber - 1];
     }
 
     receive() external payable {
