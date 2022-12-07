@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Contest is Ownable {
-    event Received(address, uint);
+    event Receiving(address, uint);
 
     struct Wave {
         uint startTimestamp;
@@ -71,6 +71,6 @@ contract Contest is Ownable {
     }
 
     receive() external payable {
-        emit Received(msg.sender, msg.value);
+        emit Receiving(msg.sender, msg.value);
     }
 }
