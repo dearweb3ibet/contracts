@@ -60,9 +60,11 @@ describe("Bet", function () {
     // Init contracts
     betCheckerContract = await ethers
       .getContractFactory("BetCheckerFake")
-      .then((factory) =>
-        factory.deploy([feedSymbolEthUsd], [feedAddressEthUsd])
-      );
+      .then((factory) => factory.deploy());
+    await betCheckerContract.setFeedAddresses(
+      [feedSymbolEthUsd],
+      [feedAddressEthUsd]
+    );
     contestContract = await ethers
       .getContractFactory("Contest")
       .then((factory) => factory.deploy());

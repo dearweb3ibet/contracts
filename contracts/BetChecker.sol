@@ -10,7 +10,10 @@ contract BetChecker is BetCheckerInterface, Ownable {
 
     mapping(string => address) internal _feedAddresses;
 
-    constructor(string[] memory feedSymbols, address[] memory feedAddresses) {
+    function setFeedAddresses(
+        string[] memory feedSymbols,
+        address[] memory feedAddresses
+    ) public onlyOwner {
         require(
             feedSymbols.length == feedAddresses.length,
             "lenghs of input arrays must be the same"
@@ -20,33 +23,23 @@ contract BetChecker is BetCheckerInterface, Ownable {
         }
     }
 
-    function setFeedAddress(string memory feedSymbol, address feedAddress)
-        public
-        onlyOwner
-    {
+    function setFeedAddress(
+        string memory feedSymbol,
+        address feedAddress
+    ) public onlyOwner {
         _feedAddresses[feedSymbol] = feedAddress;
     }
 
-    function getFeedAddress(string memory feedSymbol)
-        external
-        view
-        returns (address)
-    {
+    function getFeedAddress(
+        string memory feedSymbol
+    ) external view returns (address) {
         return _feedAddresses[feedSymbol];
     }
 
     function getPhaseForTimestamp(
         AggregatorV2V3Interface feed,
         uint256 targetTime
-    )
-        public
-        view
-        returns (
-            uint80,
-            uint256,
-            uint80
-        )
-    {
+    ) public view returns (uint80, uint256, uint80) {
         uint16 currentPhase = uint16(feed.latestRound() >> 64);
         uint80 firstRoundOfCurrentPhase = (uint80(currentPhase) << 64) + 1;
 
@@ -93,7 +86,7 @@ contract BetChecker is BetCheckerInterface, Ownable {
             // No good way to get last round of phase from Chainlink feed, so our binary search function will have to use trial & error.
             // Use 2**16 == 65536 as a upper bound on the number of rounds to search in a single Chainlink phase.
 
-            rhRound = lhRound + 2**16;
+            rhRound = lhRound + 2 ** 16;
             rhTime = 0;
         }
 
@@ -232,11 +225,10 @@ contract BetChecker is BetCheckerInterface, Ownable {
         return prices;
     }
 
-    function getMinMaxPrices(address feedAddress, uint dayStartTimestamp)
-        public
-        view
-        returns (int, int)
-    {
+    function getMinMaxPrices(
+        address feedAddress,
+        uint dayStartTimestamp
+    ) public view returns (int, int) {
         // Init params
         uint80 daysToFetch = 1;
         uint dataPointsToFetchPerDay = 256;
@@ -248,7 +240,7 @@ contract BetChecker is BetCheckerInterface, Ownable {
             dataPointsToFetchPerDay
         );
         // Fin min and max prices
-        int minPrice = 2**255 - 1;
+        int minPrice = 2 ** 255 - 1;
         int maxPrice = 0;
         for (uint80 i = 0; i < prices.length; i++) {
             int price = prices[i];
@@ -269,15 +261,7 @@ contract BetChecker is BetCheckerInterface, Ownable {
         uint dayStartTimestamp,
         int minPrice,
         int maxPrice
-    )
-        external
-        view
-        returns (
-            bool,
-            int,
-            int
-        )
-    {
+    ) external view returns (bool, int, int) {
         // Check input data
         require(minPrice <= maxPrice, "min price is higher than max price");
         require(
@@ -291,8 +275,8 @@ contract BetChecker is BetCheckerInterface, Ownable {
         );
         // Compare input prices with day prices
         bool result = false;
-        int fixedMinPrice = minPrice * 10**8;
-        int fixedMaxPrice = maxPrice * 10**8;
+        int fixedMinPrice = minPrice * 10 ** 8;
+        int fixedMaxPrice = maxPrice * 10 ** 8;
         if (fixedMinPrice <= dayMinPrice && fixedMaxPrice >= dayMinPrice) {
             result = true;
         }
