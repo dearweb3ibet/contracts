@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Usage is Ownable {
-    event Receiving(address, uint);
+    event Receiving(address from, uint value);
 
     receive() external payable {
         emit Receiving(msg.sender, msg.value);
