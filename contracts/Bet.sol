@@ -34,7 +34,11 @@ contract Bet is ERC721URIStorage, Ownable {
 
     event URISet(uint256 indexed tokenId, string tokenURI);
     event ParamsSet(uint256 indexed tokenId, Params params);
-    event ParticipantSet(uint256 indexed tokenId, Participant participant);
+    event ParticipantSet(
+        uint256 indexed tokenId,
+        address indexed participantAccountAddress,
+        Participant participant
+    );
 
     address private _betCheckerAddress;
     address private _contestAddress;
@@ -61,6 +65,7 @@ contract Bet is ERC721URIStorage, Ownable {
 
     // TODO: Check that target timestamp is not passed
     // TODO: Check that participation deadline timestamp is not passed
+    // TODO: Check that symbol is supported by bet checker contract
     function create(
         string memory uri,
         uint fee,
@@ -103,7 +108,7 @@ contract Bet is ERC721URIStorage, Ownable {
             0
         );
         _tokenParticipants[newTokenId].push(tokenParticipant);
-        emit ParticipantSet(newTokenId, tokenParticipant);
+        emit ParticipantSet(newTokenId, msg.sender, tokenParticipant);
         // Set uri
         _setTokenURI(newTokenId, uri);
         emit URISet(newTokenId, uri);
@@ -131,7 +136,7 @@ contract Bet is ERC721URIStorage, Ownable {
             0
         );
         _tokenParticipants[tokenId].push(tokenParticipant);
-        emit ParticipantSet(tokenId, tokenParticipant);
+        emit ParticipantSet(tokenId, msg.sender, tokenParticipant);
         // Update token params
         Params storage tokenParams = _tokenParams[tokenId];
         if (isFeeForSuccess) {
@@ -208,7 +213,11 @@ contract Bet is ERC721URIStorage, Ownable {
             if (winning != 0) {
                 // Save winning
                 participant.winning = winning;
-                emit ParticipantSet(tokenId, participant);
+                emit ParticipantSet(
+                    tokenId,
+                    participant.accountAddress,
+                    participant
+                );
                 // Send fee and winning
                 (sent, ) = participant.accountAddress.call{
                     value: (participant.fee + winning)

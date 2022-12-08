@@ -5,7 +5,7 @@ const contracts: any = {
     betChecker: "0x3DbF54192Af966DF64Fb7c06a883Ac5d9f204429",
     contest: "0x5B21b71DbE98F8feFe9E9E751dDfa2bc1F8Fd3c1",
     usage: "0xc7e9b82765E5edf192D702e11B108cac6D51D186",
-    bet: "0xe8A58b067f749dA3E7AecCD9c42bd10241F3ecD7",
+    bet: "0xFc226EEFe2F265Da4E8748114888b8c9A792a3f8",
     bio: "0x752ab4DDf258eec8857a9115fAed1E3afE1Abbe5",
   },
 };
