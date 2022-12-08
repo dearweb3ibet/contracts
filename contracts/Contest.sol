@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Contest is Ownable {
     event Receiving(address sender, uint value);
+    event WaveCreate(uint index, Wave wave);
+    event WaveClose(uint index, Wave wave);
 
     struct Wave {
         uint startTimestamp;
@@ -31,6 +33,7 @@ contract Contest is Ownable {
         wave.startTimestamp = block.timestamp;
         wave.endTimestamp = endTimestamp;
         wave.winnersNumber = winnersNumber;
+        emit WaveCreate(_wavesNumber - 1, wave);
     }
 
     // TODO: Check that end date allows to close last wave
@@ -50,6 +53,7 @@ contract Contest is Ownable {
         wave.closeTimestamp = block.timestamp;
         wave.winning = address(this).balance;
         wave.winners = winners;
+        emit WaveClose(_wavesNumber - 1, wave);
         // Send winnings
         uint winningValue = address(this).balance / wave.winnersNumber;
         for (uint i = 0; i < winners.length; i++) {
