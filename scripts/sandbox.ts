@@ -1,36 +1,21 @@
-import hre, { ethers } from "hardhat";
-import { deployedContracts } from "./constants";
-
-const betContractAbi: any = [
-  {
-    inputs: [],
-    name: "owner",
-    outputs: [{ internalType: "address", name: "", type: "address" }],
-    stateMutability: "view",
-    type: "function",
-  },
-];
+import { ethers } from "hardhat";
 
 async function main() {
-  // Define chain
-  const chain = hre.hardhatArguments.network;
-  if (!chain) {
-    console.log("Chain is not defined");
-    return;
-  }
-  console.log("Running on chain: " + chain);
-
-  // Define deployed contracts by chain
-  const chainDeployedContracts = deployedContracts[chain];
-
   // Define accounts
   const accounts = await ethers.getSigners();
 
   // Define contracts
-  const betContract = new ethers.Contract(
-    chainDeployedContracts.bet,
-    betContractAbi
-  );
+  const betContractAddress = "0xe8A58b067f749dA3E7AecCD9c42bd10241F3ecD7";
+  const betContractAbi: any = [
+    {
+      inputs: [],
+      name: "owner",
+      outputs: [{ internalType: "address", name: "", type: "address" }],
+      stateMutability: "view",
+      type: "function",
+    },
+  ];
+  const betContract = new ethers.Contract(betContractAddress, betContractAbi);
 
   // Run some functions
   const betContractOwner = await betContract.connect(accounts[0]).owner();
