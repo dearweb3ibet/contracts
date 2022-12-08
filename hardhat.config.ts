@@ -10,8 +10,9 @@ const config: HardhatUserConfig = {
     mumbai: {
       url: process.env.RPC_URL_MUMBAI || "",
       accounts:
-        process.env.PRIVATE_KEY_MUMBAI !== undefined
-          ? [process.env.PRIVATE_KEY_MUMBAI]
+        process.env.PRIVATE_KEY_MUMBAI_1 !== undefined &&
+        process.env.PRIVATE_KEY_MUMBAI_2 !== undefined
+          ? [process.env.PRIVATE_KEY_MUMBAI_1, process.env.PRIVATE_KEY_MUMBAI_2]
           : [],
     },
   },
