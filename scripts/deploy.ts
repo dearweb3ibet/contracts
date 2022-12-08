@@ -1,80 +1,124 @@
 import hre, { ethers } from "hardhat";
-import { contractArguments, deployedContracts } from "./constants";
+
+const contracts: any = {
+  mumbai: {
+    betChecker: "0x3DbF54192Af966DF64Fb7c06a883Ac5d9f204429",
+    contest: "0x5B21b71DbE98F8feFe9E9E751dDfa2bc1F8Fd3c1",
+    usage: "0xc7e9b82765E5edf192D702e11B108cac6D51D186",
+    bet: "0xe8A58b067f749dA3E7AecCD9c42bd10241F3ecD7",
+    bio: "0x752ab4DDf258eec8857a9115fAed1E3afE1Abbe5",
+  },
+};
+
+const contractsData: any = {
+  mumbai: {
+    betChecker: {
+      feedSymbols: ["ETHUSD"],
+      feedAddresses: ["0x0715A7794a1dc8e42615F059dD6e406A6594651A"],
+    },
+    bet: {
+      contestFeePercent: 15,
+      usageFeePercent: 10,
+    },
+  },
+};
 
 async function main() {
   // Define chain
   const chain = hre.hardhatArguments.network;
   if (!chain) {
-    console.log("Chain is not defined");
+    console.log("❌ Chain is not defined");
     return;
   }
   console.log("Running on chain: " + chain);
 
-  // Define deployed contracts and arguments by chain
-  const chainDeployedContracts = deployedContracts[chain];
-  const chainContractArguments = contractArguments[chain];
+  // Define chain data
+  const chainContracts = contracts[chain];
+  const chainContractsData = contractsData[chain];
 
   // Deploy bet checker contract
-  if (chainDeployedContracts.betChecker === "") {
-    console.log("Start deploy bet checker contract");
+  if (chainContracts.betChecker === "") {
+    console.log("👟 Start deploy bet checker contract");
     const contract = await ethers
       .getContractFactory("BetChecker")
-      .then((factory) =>
-        factory.deploy(
-          chainContractArguments.betChecker.feedSymbols,
-          chainContractArguments.betChecker.feedAddresses
-        )
-      );
-    console.log("Contract deployed to " + contract.address);
+      .then((factory) => factory.deploy());
+    await contract.setFeedAddresses(
+      chainContractsData.betChecker.feedSymbols,
+      chainContractsData.betChecker.feedAddresses
+    );
+    chainContracts.betChecker === contract.address;
+    console.log("✅ Contract deployed to " + contract.address);
+    console.log(
+      "Command for vefifying: " +
+        `npx hardhat verify --network ${chain} ${contract.address}`
+    );
   }
 
   // Deploy contest contract
-  if (chainDeployedContracts.contest === "") {
-    console.log("Start deploy contest contract");
+  if (chainContracts.contest === "") {
+    console.log("👟 Start deploy contest contract");
     const contract = await ethers
       .getContractFactory("Contest")
-      .then((factory) =>
-        factory.deploy(chainContractArguments.contest.winnersNumber)
-      );
-    console.log("Contract deployed to " + contract.address);
+      .then((factory) => factory.deploy());
+    chainContracts.contest = contract.address;
+    console.log("✅ Contract deployed to " + contract.address);
+    console.log(
+      "Command for vefifying: " +
+        `npx hardhat verify --network ${chain} ${contract.address}`
+    );
   }
 
   // Deploy usage contract
-  if (chainDeployedContracts.usage === "") {
-    console.log("Start deploy usage contract");
+  if (chainContracts.usage === "") {
+    console.log("👟 Start deploy usage contract");
     const contract = await ethers
       .getContractFactory("Usage")
       .then((factory) => factory.deploy());
-    console.log("Contract deployed to " + contract.address);
+    chainContracts.usage = contract.address;
+    console.log("✅ Contract deployed to " + contract.address);
+    console.log(
+      "Command for vefifying: " +
+        `npx hardhat verify --network ${chain} ${contract.address}`
+    );
   }
 
   if (
-    chainDeployedContracts.bet === "" &&
-    chainDeployedContracts.betChecker !== "" &&
-    chainDeployedContracts.contest !== "" &&
-    chainDeployedContracts.usage !== ""
+    chainContracts.bet === "" &&
+    chainContracts.betChecker !== "" &&
+    chainContracts.contest !== "" &&
+    chainContracts.usage !== ""
   ) {
-    console.log("Start deploy bet contract");
+    console.log("👟 Start deploy bet contract");
     const contract = await ethers
       .getContractFactory("Bet")
       .then((factory) =>
         factory.deploy(
-          chainDeployedContracts.betChecker,
-          chainDeployedContracts.contest,
-          chainDeployedContracts.usage,
-          chainContractArguments.bet.contestFeePercent,
-          chainContractArguments.bet.usageFeePercent
+          chainContracts.betChecker,
+          chainContracts.contest,
+          chainContracts.usage,
+          chainContractsData.bet.contestFeePercent,
+          chainContractsData.bet.usageFeePercent
         )
       );
-    console.log("Contract deployed to " + contract.address);
+    chainContracts.bet = contract.address;
+    console.log("✅ Contract deployed to " + contract.address);
+    console.log(
+      "Command for vefifying: " +
+        `npx hardhat verify --network ${chain} ${contract.address} ${chainContracts.betChecker} ${chainContracts.contest} ${chainContracts.usage} ${chainContractsData.bet.contestFeePercent} ${chainContractsData.bet.usageFeePercent}`
+    );
   }
 
-  if (chainDeployedContracts.bio === "") {
-    console.log("Start deploy bio contract");
+  if (chainContracts.bio === "") {
+    console.log("👟 Start deploy bio contract");
     const contract = await ethers
       .getContractFactory("Bio")
       .then((factory) => factory.deploy());
-    console.log("Contract deployed to " + contract.address);
+    chainContracts.bio = contract.address;
+    console.log("✅ Contract deployed to " + contract.address);
+    console.log(
+      "Command for vefifying: " +
+        `npx hardhat verify --network ${chain} ${contract.address}`
+    );
   }
 }
 
