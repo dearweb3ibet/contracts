@@ -3,9 +3,9 @@ import hre, { ethers } from "hardhat";
 const contracts: any = {
   mumbai: {
     betChecker: "0x3DbF54192Af966DF64Fb7c06a883Ac5d9f204429",
-    contest: "0x5B21b71DbE98F8feFe9E9E751dDfa2bc1F8Fd3c1",
+    contest: "0x44e91A1729441e30A6d96D16F0D44952548F1141",
     usage: "0xc7e9b82765E5edf192D702e11B108cac6D51D186",
-    bet: "0xFc226EEFe2F265Da4E8748114888b8c9A792a3f8",
+    bet: "0xdfBFc10383932Ece89A9E697Bd31646713bbfa34",
     bio: "0x752ab4DDf258eec8857a9115fAed1E3afE1Abbe5",
   },
 };
