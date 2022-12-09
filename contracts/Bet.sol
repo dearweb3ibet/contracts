@@ -150,6 +150,7 @@ contract Bet is ERC721URIStorage, Ownable {
 
     // TODO: Check that bet is not closed
     // TODO: Check that target date allows close bet
+    // TODO: Test function if bet hasn't winners
     function close(uint256 tokenId) public {
         // Checks
         require(_exists(tokenId), "token is not exists");
