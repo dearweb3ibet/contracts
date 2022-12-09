@@ -49,7 +49,7 @@ async function main() {
     chainContracts.betChecker === contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🛡️ Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
@@ -63,7 +63,7 @@ async function main() {
     chainContracts.contest = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🛡️ Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
@@ -77,7 +77,7 @@ async function main() {
     chainContracts.usage = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🛡️ Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
@@ -103,7 +103,7 @@ async function main() {
     chainContracts.bet = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🛡️ Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address} ${chainContracts.betChecker} ${chainContracts.contest} ${chainContracts.usage} ${chainContractsData.bet.contestFeePercent} ${chainContractsData.bet.usageFeePercent}`
     );
   }
@@ -116,7 +116,7 @@ async function main() {
     chainContracts.bio = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🛡️ Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
