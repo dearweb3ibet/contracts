@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/BetCheckerInterface.sol";
+import "./interfaces/ContestInterface.sol";
 
 contract Bet is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
@@ -196,6 +197,7 @@ contract Bet is ERC721URIStorage, Ownable {
         (sent, ) = _usageAddress.call{value: feeForUsage}("");
         require(sent, "failed to send fee to usage");
         // Send fee and winning to winners
+        uint winnersNumber;
         for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
             Participant storage participant = _tokenParticipants[tokenId][i];
             // Calculate winning
@@ -223,8 +225,26 @@ contract Bet is ERC721URIStorage, Ownable {
                     value: (participant.fee + winning)
                 }("");
                 require(sent, "failed to send fee and winning to winners");
+                // Increase number of winners
+                winnersNumber++;
             }
         }
+        // Send participants and their winnings contest contract
+        address[] memory participantAddresses = new address[](
+            _tokenParticipants[tokenId].length
+        );
+        uint[] memory participantWinnings = new uint[](
+            _tokenParticipants[tokenId].length
+        );
+        for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
+            Participant memory participant = _tokenParticipants[tokenId][i];
+            participantAddresses[i] = participant.accountAddress;
+            participantWinnings[i] = participant.winning;
+        }
+        ContestInterface(_contestAddress).processBetParticipants(
+            participantAddresses,
+            participantWinnings
+        );
     }
 
     function getBetCheckerAddress() public view returns (address) {

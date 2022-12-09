@@ -6,6 +6,22 @@ describe("Bet", function () {
   // Constants
   const feedSymbolEthUsd = "ETHUSD";
   const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
+  const contestWaveEndTimestamp = 1672099200;
+  const contestWaveWinnersNumber = 0;
+  const contestWaveParticipants = [
+    {
+      accountIndex: 0,
+      successes: 0,
+      failures: 1,
+      variance: -1,
+    },
+    {
+      accountIndex: 0,
+      successes: 1,
+      failures: 0,
+      variance: 1,
+    },
+  ];
   const contestFeePercent = 15;
   const usageFeePercent = 10;
   const betParams = {
@@ -68,6 +84,10 @@ describe("Bet", function () {
     contestContract = await ethers
       .getContractFactory("Contest")
       .then((factory) => factory.deploy());
+    await contestContract.startWave(
+      contestWaveEndTimestamp,
+      contestWaveWinnersNumber
+    );
     usageContract = await ethers
       .getContractFactory("Usage")
       .then((factory) => factory.deploy());
@@ -213,6 +233,34 @@ describe("Bet", function () {
         feeForContest,
         feeForUsage,
       ]
+    );
+    // Check contest wave participants
+    const contestParticipants = await contestContract.getLastWaveParticipants();
+    // Check bet creator
+    expect(contestParticipants[0].accountAddress).to.equal(
+      await accounts[betParticipants.creator.accountIndex].getAddress()
+    );
+    expect(contestParticipants[0].successes).to.equal(
+      betParticipants.creator.isFeeForSuccess ? 0 : 1
+    );
+    expect(contestParticipants[0].failures).to.equal(
+      betParticipants.creator.isFeeForSuccess ? 1 : 0
+    );
+    expect(contestParticipants[0].variance).to.equal(
+      betParticipants.creator.isFeeForSuccess ? -1 : 0
+    );
+    // Check second account
+    expect(contestParticipants[1].accountAddress).to.equal(
+      await accounts[betParticipants.second.accountIndex].getAddress()
+    );
+    expect(contestParticipants[1].successes).to.equal(
+      betParticipants.second.isFeeForSuccess ? 0 : 1
+    );
+    expect(contestParticipants[1].failures).to.equal(
+      betParticipants.second.isFeeForSuccess ? 1 : 0
+    );
+    expect(contestParticipants[1].variance).to.equal(
+      betParticipants.second.isFeeForSuccess ? -1 : 1
     );
   });
 });
