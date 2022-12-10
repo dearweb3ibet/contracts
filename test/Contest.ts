@@ -47,11 +47,16 @@ describe("Contest", function () {
       [accounts[0], contestContract.address],
       [contestBalance.mul(ethers.constants.NegativeOne), contestBalance]
     );
+    // Check last wave index
+    const lastWaveIndex = await contestContract
+      .connect(accounts[0])
+      .getLastWaveIndex();
+    expect(lastWaveIndex).to.equal(BigNumber.from(0));
     // Close wave
     await expect(
       contestContract
         .connect(accounts[0])
-        .closeLastWave([
+        .closeWave(lastWaveIndex, [
           await accounts[1].getAddress(),
           await accounts[2].getAddress(),
           await accounts[3].getAddress(),
@@ -76,11 +81,11 @@ describe("Contest", function () {
     await expect(
       contestContract
         .connect(accounts[0])
-        .closeLastWave([
+        .closeWave(lastWaveIndex, [
           await accounts[1].getAddress(),
           await accounts[2].getAddress(),
           await accounts[3].getAddress(),
         ])
-    ).to.be.revertedWith("last wave is already closed");
+    ).to.be.revertedWith("wave is already closed");
   });
 });

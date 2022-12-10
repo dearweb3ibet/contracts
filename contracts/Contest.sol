@@ -50,24 +50,21 @@ contract Contest is ContestInterface, Ownable {
         emit WaveCreate(_wavesNumber - 1, wave);
     }
 
-    // TODO: Check that end date allows to close last wave
-    function closeLastWave(address[] memory winners) public onlyOwner {
+    // TODO: Check that end date allows to close wave
+    function closeWave(uint index, address[] memory winners) public onlyOwner {
         // Checks
-        require(_wavesNumber > 0, "waves list is empty");
+        require(_waves[index].startTimestamp != 0, "wave is not started");
+        require(_waves[index].closeTimestamp == 0, "wave is already closed");
         require(
-            _waves[_wavesNumber - 1].closeTimestamp == 0,
-            "last wave is already closed"
-        );
-        require(
-            winners.length == _waves[_wavesNumber - 1].winnersNumber,
+            winners.length == _waves[index].winnersNumber,
             "number of winners is incorrect"
         );
         // Close wave
-        Wave storage wave = _waves[_wavesNumber - 1];
+        Wave storage wave = _waves[index];
         wave.closeTimestamp = block.timestamp;
         wave.winning = address(this).balance;
         wave.winners = winners;
-        emit WaveClose(_wavesNumber - 1, wave);
+        emit WaveClose(index, wave);
         // Send winnings
         uint winningValue = address(this).balance / wave.winnersNumber;
         for (uint i = 0; i < winners.length; i++) {
@@ -80,12 +77,12 @@ contract Contest is ContestInterface, Ownable {
         return _wavesNumber;
     }
 
-    function getWave(uint index) public view returns (Wave memory) {
-        return _waves[index];
+    function getLastWaveIndex() public view returns (uint) {
+        return _wavesNumber - 1;
     }
 
-    function getLastWave() public view returns (Wave memory) {
-        return _waves[_wavesNumber - 1];
+    function getWave(uint index) public view returns (Wave memory) {
+        return _waves[index];
     }
 
     function getWaveParticipants(
@@ -94,33 +91,27 @@ contract Contest is ContestInterface, Ownable {
         return _waveParticipants[index];
     }
 
-    function getLastWaveParticipants()
-        public
-        view
-        returns (WaveParticipant[] memory)
-    {
-        return _waveParticipants[_wavesNumber - 1];
-    }
-
-    // TODO: Check that data sended by bet contract
+    /**
+     * Update last wave participant by bet participants data.
+     *
+     * TODO: Check that data sended by bet contract
+     */
     function processBetParticipants(
         address[] memory betParticipantAddresses,
         uint[] memory betParticipantWinnings
     ) public {
-        // Check waves number
-        if (_wavesNumber == 0) {
-            return;
-        }
-        // Get and check last wave
-        Wave storage wave = _waves[_wavesNumber - 1];
+        // Get last wave
+        uint lastWaveIndex = getLastWaveIndex();
+        Wave storage wave = _waves[lastWaveIndex];
+        // Check last wave
         if (wave.startTimestamp == 0 || wave.closeTimestamp != 0) {
             return;
         }
         // Get last wave participants
         WaveParticipant[] storage waveParticipants = _waveParticipants[
-            _wavesNumber - 1
+            lastWaveIndex
         ];
-        // Pricess every bet participant
+        // Process every bet participant
         for (uint i = 0; i < betParticipantAddresses.length; i++) {
             // Try find wave participant by bet participant
             bool isWaveParticipantFound = false;
@@ -141,7 +132,7 @@ contract Contest is ContestInterface, Ownable {
                         waveParticipants[j].failures;
                     // Emit event
                     emit WaveParticipantSet(
-                        _wavesNumber - 1,
+                        lastWaveIndex,
                         waveParticipants[j].accountAddress,
                         waveParticipants[j]
                     );
@@ -159,7 +150,7 @@ contract Contest is ContestInterface, Ownable {
                 waveParticipants.push(waveParticipant);
                 // Emit event
                 emit WaveParticipantSet(
-                    _wavesNumber - 1,
+                    lastWaveIndex,
                     waveParticipant.accountAddress,
                     waveParticipant
                 );

@@ -8,20 +8,6 @@ describe("Bet", function () {
   const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
   const contestWaveEndTimestamp = 1672099200;
   const contestWaveWinnersNumber = 0;
-  const contestWaveParticipants = [
-    {
-      accountIndex: 0,
-      successes: 0,
-      failures: 1,
-      variance: -1,
-    },
-    {
-      accountIndex: 0,
-      successes: 1,
-      failures: 0,
-      variance: 1,
-    },
-  ];
   const contestFeePercent = 15;
   const usageFeePercent = 10;
   const betParams = {
@@ -235,7 +221,10 @@ describe("Bet", function () {
       ]
     );
     // Check contest wave participants
-    const contestParticipants = await contestContract.getLastWaveParticipants();
+    const contestLastWaveIndex = await contestContract.getLastWaveIndex();
+    const contestParticipants = await contestContract.getWaveParticipants(
+      contestLastWaveIndex
+    );
     // Check bet creator
     expect(contestParticipants[0].accountAddress).to.equal(
       await accounts[betParticipants.creator.accountIndex].getAddress()
