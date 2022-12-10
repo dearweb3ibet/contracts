@@ -5,7 +5,7 @@ async function main() {
   const accounts = await ethers.getSigners();
 
   // Define bet contract
-  const betContractAddress = "0xdfBFc10383932Ece89A9E697Bd31646713bbfa34";
+  const betContractAddress = "0x9B8Bc148030026081F6548fc053358C9Ff4D75Ff";
   const betContractAbi: any = [
     {
       inputs: [
@@ -931,7 +931,7 @@ async function main() {
   const betContract = new ethers.Contract(betContractAddress, betContractAbi);
 
   // Define contest contract
-  const contestContractAddress = "0x44e91A1729441e30A6d96D16F0D44952548F1141";
+  const contestContractAddress = "0xB57C5F7BDc214A6A26aaf98FBccc87Fd19102620";
   const contestContractAbi = [
     {
       anonymous: false,
@@ -1257,7 +1257,8 @@ async function main() {
   );
 
   // Run some functions
-  // const transaction = await betContract
+  let transaction;
+  // transaction = await betContract
   //   .connect(accounts[0])
   //   .create(
   //     "",
@@ -1271,23 +1272,23 @@ async function main() {
   //       value: ethers.utils.parseEther("0.01"),
   //     }
   //   );
-  // const transaction = await betContract
+  // transaction = await betContract
   //   .connect(accounts[1])
   //   .takePart(1, ethers.utils.parseEther("0.006"), false, {
   //     value: ethers.utils.parseEther("0.006"),
   //   });
-  // const transaction = await betContract.connect(accounts[0]).close(1);
-  // const transaction = await contestContract
+  // transaction = await betContract.connect(accounts[0]).close(1);
+  // transaction = await contestContract
   //   .connect(accounts[0])
   //   .startWave(1672099200, 2);
-  // const transaction = await contestContract
+  // transaction = await contestContract
   //   .connect(accounts[0])
   //   .closeLastWave([
   //     accounts[0].address,
   //     accounts[0].address,
   //     accounts[0].address,
   //   ]);
-  // console.log("Transaction:", transaction);
+  console.log("transaction:", transaction);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
