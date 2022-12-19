@@ -23,3 +23,4 @@ ETHERSCAN_API_KEY_MUMBAI=
 - Chainlink historical price data docs - https://docs.chain.link/docs/data-feeds/price-feeds/historical-data/
 - Chainlink price feed contract addresses - https://docs.chain.link/docs/data-feeds/price-feeds/addresses/
 - Contract to easily get historical data from chainlink feeds - https://github.com/andyszy/DegenFetcher
+- Debugging with hardhat - https://hardhat.org/tutorial/debugging-with-hardhat-network
