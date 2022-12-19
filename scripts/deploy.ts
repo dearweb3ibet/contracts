@@ -1,8 +1,10 @@
 import hre, { upgrades, ethers } from "hardhat";
 import {
+  BetChecker__factory,
   Bet__factory,
   Bio__factory,
   Contest__factory,
+  Usage__factory,
 } from "../typechain-types";
 
 const contracts: {
@@ -87,9 +89,7 @@ async function main() {
   // Deploy bet checker contract
   if (chainContracts.betChecker === "") {
     console.log("\n👟 Start deploy bet checker contract");
-    const contract = await ethers
-      .getContractFactory("BetChecker")
-      .then((factory) => factory.deploy());
+    const contract = await new BetChecker__factory(deployer).deploy();
     await contract.setFeedAddresses(
       chainContractsData.betChecker.feedSymbols,
       chainContractsData.betChecker.feedAddresses
@@ -132,9 +132,7 @@ async function main() {
   // Deploy usage contract
   if (chainContracts.usage === "") {
     console.log("\n👟 Start deploy usage contract");
-    const contract = await ethers
-      .getContractFactory("Usage")
-      .then((factory) => factory.deploy());
+    const contract = await new Usage__factory(deployer).deploy();
     chainContracts.usage = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(

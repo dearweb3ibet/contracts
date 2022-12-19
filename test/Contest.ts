@@ -1,6 +1,7 @@
-import { BigNumber, Contract, Signer } from "ethers";
-import { ethers } from "hardhat";
 import { expect } from "chai";
+import { BigNumber, Signer } from "ethers";
+import { ethers } from "hardhat";
+import { Contest, Contest__factory } from "../typechain-types";
 
 describe("Contest", function () {
   // Constants
@@ -13,15 +14,14 @@ describe("Contest", function () {
   // Accounts
   let accounts: Array<Signer>;
   // Contracts
-  let contestContract: Contract;
+  let contestContract: Contest;
 
   before(async function () {
     // Init accounts
     accounts = await ethers.getSigners();
     // Init contracts
-    contestContract = await ethers
-      .getContractFactory("Contest")
-      .then((factory) => factory.deploy());
+    contestContract = await new Contest__factory(accounts[0]).deploy();
+    await contestContract.initialize();
   });
 
   it("Should start and close wave", async function () {

@@ -78,6 +78,7 @@ describe("Bet", function () {
       [feedAddressEthUsd]
     );
     contestContract = await new Contest__factory(deployer).deploy();
+    await contestContract.initialize();
     await contestContract.startWave(
       contestWaveEndTimestamp,
       contestWaveWinnersNumber

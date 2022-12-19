@@ -1,6 +1,7 @@
-import { Contract, Signer } from "ethers";
-import { ethers } from "hardhat";
 import { expect } from "chai";
+import { Signer } from "ethers";
+import { ethers } from "hardhat";
+import { BetChecker, BetChecker__factory } from "../typechain-types";
 
 describe("BetChecker", function () {
   // Constants
@@ -13,15 +14,13 @@ describe("BetChecker", function () {
   let account1: Signer;
   let account2: Signer;
   // Contract
-  let contract: Contract;
+  let contract: BetChecker;
 
   before(async function () {
     // Init accounts
     [account1, account2] = await ethers.getSigners();
     // Deploy contract
-    contract = await ethers
-      .getContractFactory("BetChecker")
-      .then((factory) => factory.deploy());
+    contract = await new BetChecker__factory(account1).deploy();
   });
 
   it("Should add and update feed addresses", async function () {

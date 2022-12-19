@@ -1,6 +1,7 @@
-import { BigNumber, Contract, Signer } from "ethers";
-import { ethers } from "hardhat";
 import { expect } from "chai";
+import { BigNumber, Signer } from "ethers";
+import { ethers } from "hardhat";
+import { Usage, Usage__factory } from "../typechain-types";
 
 describe("Usage", function () {
   // Constants
@@ -8,15 +9,13 @@ describe("Usage", function () {
   // Accounts
   let accounts: Array<Signer>;
   // Contracts
-  let usageContract: Contract;
+  let usageContract: Usage;
 
   before(async function () {
     // Init accounts
     accounts = await ethers.getSigners();
     // Init contracts
-    usageContract = await ethers
-      .getContractFactory("Usage")
-      .then((factory) => factory.deploy());
+    usageContract = await new Usage__factory(accounts[0]).deploy();
   });
 
   it("Should send and withdraw tokens", async function () {
