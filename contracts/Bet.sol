@@ -7,17 +7,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IBetChecker.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
+import "./libraries/Events.sol";
 
 contract Bet is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
-
-    event URISet(uint256 indexed tokenId, string tokenURI);
-    event ParamsSet(uint256 indexed tokenId, DataTypes.BetParams params);
-    event ParticipantSet(
-        uint256 indexed tokenId,
-        address indexed participantAccountAddress,
-        DataTypes.BetParticipant participant
-    );
 
     address private _betCheckerAddress;
     address private _contestAddress;
@@ -77,15 +70,15 @@ contract Bet is ERC721URIStorage, Ownable {
             false
         );
         _tokenParams[newTokenId] = tokenParams;
-        emit ParamsSet(newTokenId, tokenParams);
+        emit Events.BetParamsSet(newTokenId, tokenParams);
         // Add participant
         DataTypes.BetParticipant memory tokenParticipant = DataTypes
             .BetParticipant(block.timestamp, msg.sender, fee, true, 0);
         _tokenParticipants[newTokenId].push(tokenParticipant);
-        emit ParticipantSet(newTokenId, msg.sender, tokenParticipant);
+        emit Events.BetParticipantSet(newTokenId, msg.sender, tokenParticipant);
         // Set uri
         _setTokenURI(newTokenId, uri);
-        emit URISet(newTokenId, uri);
+        emit Events.URISet(newTokenId, uri);
         // Return
         return newTokenId;
     }
@@ -111,7 +104,7 @@ contract Bet is ERC721URIStorage, Ownable {
                 0
             );
         _tokenParticipants[tokenId].push(tokenParticipant);
-        emit ParticipantSet(tokenId, msg.sender, tokenParticipant);
+        emit Events.BetParticipantSet(tokenId, msg.sender, tokenParticipant);
         // Update token params
         DataTypes.BetParams storage tokenParams = _tokenParams[tokenId];
         if (isFeeForSuccess) {
@@ -119,7 +112,7 @@ contract Bet is ERC721URIStorage, Ownable {
         } else {
             tokenParams.feeForFailure += fee;
         }
-        emit ParamsSet(tokenId, tokenParams);
+        emit Events.BetParamsSet(tokenId, tokenParams);
     }
 
     // TODO: Check that bet is not closed
@@ -140,7 +133,7 @@ contract Bet is ERC721URIStorage, Ownable {
         // Update token params
         tokenParams.isClosed = true;
         tokenParams.isSuccessful = isBetSuccessful;
-        emit ParamsSet(tokenId, tokenParams);
+        emit Events.BetParamsSet(tokenId, tokenParams);
         // Define fees for contest, usage and winners
         uint feeForContest;
         uint feeForUsage;
@@ -192,7 +185,7 @@ contract Bet is ERC721URIStorage, Ownable {
             if (winning != 0) {
                 // Save winning
                 participant.winning = winning;
-                emit ParticipantSet(
+                emit Events.BetParticipantSet(
                     tokenId,
                     participant.accountAddress,
                     participant

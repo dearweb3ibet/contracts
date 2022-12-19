@@ -4,17 +4,9 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
+import "./libraries/Events.sol";
 
 contract Contest is IContest, Ownable {
-    event Receiving(address sender, uint value);
-    event WaveCreate(uint index, DataTypes.ContestWave wave);
-    event WaveClose(uint index, DataTypes.ContestWave wave);
-    event WaveParticipantSet(
-        uint index,
-        address indexed participantAccountAddress,
-        DataTypes.ContestWaveParticipant participant
-    );
-
     uint private _wavesNumber;
     mapping(uint256 => DataTypes.ContestWave) private _waves;
     mapping(uint256 => DataTypes.ContestWaveParticipant[])
@@ -33,7 +25,7 @@ contract Contest is IContest, Ownable {
         wave.startTimestamp = block.timestamp;
         wave.endTimestamp = endTimestamp;
         wave.winnersNumber = winnersNumber;
-        emit WaveCreate(_wavesNumber - 1, wave);
+        emit Events.ContestWaveCreated(_wavesNumber - 1, wave);
     }
 
     // TODO: Check that end date allows to close wave
@@ -50,7 +42,7 @@ contract Contest is IContest, Ownable {
         wave.closeTimestamp = block.timestamp;
         wave.winning = address(this).balance;
         wave.winners = winners;
-        emit WaveClose(index, wave);
+        emit Events.ContestWaveClosed(index, wave);
         // Send winnings
         uint winningValue = address(this).balance / wave.winnersNumber;
         for (uint i = 0; i < winners.length; i++) {
@@ -118,7 +110,7 @@ contract Contest is IContest, Ownable {
                         waveParticipants[j].successes -
                         waveParticipants[j].failures;
                     // Emit event
-                    emit WaveParticipantSet(
+                    emit Events.ContestWaveParticipantSet(
                         lastWaveIndex,
                         waveParticipants[j].accountAddress,
                         waveParticipants[j]
@@ -137,7 +129,7 @@ contract Contest is IContest, Ownable {
                     );
                 waveParticipants.push(waveParticipant);
                 // Emit event
-                emit WaveParticipantSet(
+                emit Events.ContestWaveParticipantSet(
                     lastWaveIndex,
                     waveParticipant.accountAddress,
                     waveParticipant
@@ -147,6 +139,6 @@ contract Contest is IContest, Ownable {
     }
 
     receive() external payable {
-        emit Receiving(msg.sender, msg.value);
+        emit Events.Received(msg.sender, msg.value);
     }
 }
