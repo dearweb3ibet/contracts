@@ -3,9 +3,9 @@ pragma solidity ^0.8.9;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/BetCheckerInterface.sol";
+import "./interfaces/IBetChecker.sol";
 
-contract BetChecker is BetCheckerInterface, Ownable {
+contract BetChecker is IBetChecker, Ownable {
     uint80 constant SECONDS_PER_DAY = 3600 * 24;
 
     mapping(string => address) internal _feedAddresses;

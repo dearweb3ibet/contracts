@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.9;
 
-interface BetCheckerInterface {
+interface IBetChecker {
     function setFeedAddresses(
         string[] memory feedSymbols,
         address[] memory feedAddresses

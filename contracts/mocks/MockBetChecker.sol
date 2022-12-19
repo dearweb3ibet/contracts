@@ -2,9 +2,9 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/BetCheckerInterface.sol";
+import "../interfaces/IBetChecker.sol";
 
-contract MockBetChecker is BetCheckerInterface, Ownable {
+contract MockBetChecker is IBetChecker, Ownable {
     mapping(string => address) internal _feedAddresses;
 
     function setFeedAddresses(

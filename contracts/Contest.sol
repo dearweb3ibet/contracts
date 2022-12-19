@@ -2,9 +2,9 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/ContestInterface.sol";
+import "./interfaces/IContest.sol";
 
-contract Contest is ContestInterface, Ownable {
+contract Contest is IContest, Ownable {
     struct Wave {
         uint startTimestamp;
         uint endTimestamp;

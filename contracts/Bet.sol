@@ -4,8 +4,8 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/BetCheckerInterface.sol";
-import "./interfaces/ContestInterface.sol";
+import "./interfaces/IBetChecker.sol";
+import "./interfaces/IContest.sol";
 
 contract Bet is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
@@ -156,7 +156,7 @@ contract Bet is ERC721URIStorage, Ownable {
         require(_exists(tokenId), "token is not exists");
         // Define whether a bet is successful or not
         Params storage tokenParams = _tokenParams[tokenId];
-        (bool isBetSuccessful, , ) = BetCheckerInterface(_betCheckerAddress)
+        (bool isBetSuccessful, , ) = IBetChecker(_betCheckerAddress)
             .isPriceExist(
                 tokenParams.symbol,
                 tokenParams.targetTimestamp,
@@ -242,7 +242,7 @@ contract Bet is ERC721URIStorage, Ownable {
             participantAddresses[i] = participant.accountAddress;
             participantWinnings[i] = participant.winning;
         }
-        ContestInterface(_contestAddress).processBetParticipants(
+        IContest(_contestAddress).processBetParticipants(
             participantAddresses,
             participantWinnings
         );
@@ -301,7 +301,6 @@ contract Bet is ERC721URIStorage, Ownable {
     function getBetCheckerFeedAddress(
         string memory feedSymbol
     ) public view returns (address) {
-        return
-            BetCheckerInterface(_betCheckerAddress).getFeedAddress(feedSymbol);
+        return IBetChecker(_betCheckerAddress).getFeedAddress(feedSymbol);
     }
 }
