@@ -1,46 +1,54 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract Bio is ERC721URIStorage {
+/**
+ * Contract that stores links to account biographies.
+ */
+contract Bio is ERC721URIStorageUpgradeable {
     using Counters for Counters.Counter;
 
     event URISet(uint256 indexed tokenId, string tokenURI);
 
-    Counters.Counter private _tokenIds;
-    mapping(address => uint256) internal _bioOwners;
+    Counters.Counter private _counter;
+    mapping(address => uint256) internal _owners;
 
-    constructor() ERC721("dearweb3ibet bio", "DW3IBBIO") {}
+    function initialize() public initializer {
+        __ERC721_init("dearweb3ibet bio", "DW3IBBIO");
+    }
 
     /**
      * Get uri by owner.
      */
     function getURI(address owner) external view returns (string memory) {
-        uint tokenId = _bioOwners[owner];
-        // TODO: Return empty string if token is not exists
-        return tokenURI(tokenId);
+        uint256 tokenId = _owners[owner];
+        if (_exists(tokenId)) {
+            return tokenURI(tokenId);
+        } else {
+            return "";
+        }
     }
 
     /**
-     * Set uri for message sender's token. Additionally mint token if required.
+     * Set uri for sender's token.
      */
     function setURI(string memory tokenURI) public {
         // Mint token if sender does not have it yet
-        if (_bioOwners[msg.sender] == 0) {
+        if (_owners[msg.sender] == 0) {
             // Update counter
-            _tokenIds.increment();
+            _counter.increment();
             // Mint token
-            uint256 newItemId = _tokenIds.current();
-            _mint(msg.sender, newItemId);
-            _bioOwners[msg.sender] = newItemId;
+            uint256 tokenId = _counter.current();
+            _mint(msg.sender, tokenId);
+            _owners[msg.sender] = tokenId;
             // Set URI
-            _setURI(newItemId, tokenURI);
+            _setURI(tokenId, tokenURI);
         }
         // Set URI if sender already have token
         else {
-            _setURI(_bioOwners[msg.sender], tokenURI);
+            _setURI(_owners[msg.sender], tokenURI);
         }
     }
 
@@ -53,15 +61,16 @@ contract Bio is ERC721URIStorage {
     }
 
     /**
-     * Function before transfer.
+     * Hook that is called before any token transfer.
      */
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
-    ) internal virtual override(ERC721) {
-        super._beforeTokenTransfer(from, to, tokenId);
-        // Check to allow only zero address transfer tokens
+        uint256 firstTokenId,
+        uint256 batchSize
+    ) internal virtual override(ERC721Upgradeable) {
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+        // Disable transfers except minting
         require(from == address(0), "Token is non-transferable");
     }
 }

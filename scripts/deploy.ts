@@ -1,16 +1,44 @@
-import hre, { ethers } from "hardhat";
+import hre, { upgrades, ethers } from "hardhat";
+import { Bio__factory } from "../typechain-types";
 
-const contracts: any = {
+const contracts: {
+  [key: string]: {
+    betChecker: string;
+    contest: string;
+    usage: string;
+    bet: string;
+    bio: {
+      proxy: string;
+      proxyAdmin: string;
+      impl: string;
+    };
+  };
+} = {
   mumbai: {
     betChecker: "0x3DbF54192Af966DF64Fb7c06a883Ac5d9f204429",
     contest: "0xB57C5F7BDc214A6A26aaf98FBccc87Fd19102620",
     usage: "0xc7e9b82765E5edf192D702e11B108cac6D51D186",
     bet: "0x9B8Bc148030026081F6548fc053358C9Ff4D75Ff",
-    bio: "",
+    bio: {
+      proxy: "0x2c7388b7c05e399711A158739e894eBC264D396c",
+      proxyAdmin: "0x0d3b20f33e95Cf06f05b9ffD0b34faEED67baCd5",
+      impl: "0xB23553dCe783f1918CD7C2fc6716Acdd6710763F",
+    },
   },
 };
 
-const contractsData: any = {
+const contractsData: {
+  [key: string]: {
+    betChecker: {
+      feedSymbols: Array<string>;
+      feedAddresses: Array<string>;
+    };
+    bet: {
+      contestFeePercent: number;
+      usageFeePercent: number;
+    };
+  };
+} = {
   mumbai: {
     betChecker: {
       feedSymbols: ["ETHUSD"],
@@ -30,7 +58,11 @@ async function main() {
     console.log("\n❌ Chain is not defined");
     return;
   }
-  console.log("\nRunning on chain: " + chain);
+  console.log(`\n👟 Running on chain: ${chain}`);
+
+  // Define deployer
+  const signers = await ethers.getSigners();
+  const deployer = signers[0];
 
   // Define chain data
   const chainContracts = contracts[chain];
@@ -108,13 +140,26 @@ async function main() {
     );
   }
 
-  if (chainContracts.bio === "") {
+  if (chainContracts.bio.proxy === "") {
     console.log("\n👟 Start deploy bio contract");
-    const contract = await ethers
-      .getContractFactory("Bio")
-      .then((factory) => factory.deploy());
-    chainContracts.bio = contract.address;
+    const contract = await upgrades.deployProxy(new Bio__factory(deployer));
+    await contract.deployed();
+    chainContracts.bio.proxy = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
+    console.log(
+      "Command for vefifying: " +
+        `npx hardhat verify --network ${chain} ${contract.address}`
+    );
+  }
+
+  if (chainContracts.bio.proxy !== "" && chainContracts.bio.impl === "") {
+    console.log("\n👟 Start upgrade bio contract");
+    const contract = await upgrades.upgradeProxy(
+      chainContracts.bio.proxy,
+      new Bio__factory(deployer)
+    );
+    await contract.deployed();
+    console.log("✅ Contract upgraded");
     console.log(
       "Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`

@@ -1,50 +1,69 @@
-import { BigNumber, Contract, Signer } from "ethers";
-import { ethers } from "hardhat";
 import { expect } from "chai";
+import { BigNumber, Signer } from "ethers";
+import { ethers } from "hardhat";
+import { Bio, Bio__factory } from "../typechain-types";
 
 describe("Bio", function () {
   // Accounts
-  let account1: Signer;
-  let account2: Signer;
+  let accounts: Array<Signer>;
+  let deployer: Signer;
+  let userOne: Signer;
+  let userTwo: Signer;
+  // Addresses
+  let deployAddress: string;
+  let userOneAddress: string;
+  let userTwoAddress: string;
   // Contract
-  let contract: Contract;
+  let bioContract: Bio;
 
   before(async function () {
     // Init accounts
-    [account1, account2] = await ethers.getSigners();
-
-    // Deploy contract
-    contract = await ethers
-      .getContractFactory("Bio")
-      .then((factory) => factory.deploy());
+    accounts = await ethers.getSigners();
+    deployer = accounts[0];
+    userOne = accounts[1];
+    userTwo = accounts[2];
+    // Init addresses
+    deployAddress = await deployer.getAddress();
+    userOneAddress = await userOne.getAddress();
+    userTwoAddress = await userTwo.getAddress();
+    // Deploy contracts
+    bioContract = await new Bio__factory(deployer).deploy();
   });
 
   it("Should own only one token after several uri changes", async function () {
-    // Check balance before first uri change
-    expect(await contract.balanceOf(await account1.getAddress())).to.equal(
-      BigNumber.from(0)
+    // Init test data
+    const uriEmpty = "";
+    const uriOne = "ipfs://one";
+    const uriTwo = "ipfs://two";
+    // Check before first uri change
+    expect(await bioContract.balanceOf(userOneAddress)).to.equal(
+      ethers.constants.Zero
     );
-    // First change uri and check balance
-    await contract.connect(account1).setURI("ipfs://");
-    expect(await contract.balanceOf(await account1.getAddress())).to.equal(
+    expect(await bioContract.getURI(userOneAddress)).to.equal(uriEmpty);
+    // First change uri and check
+    await expect(bioContract.connect(userOne).setURI(uriOne)).to.be.not
+      .reverted;
+    expect(await bioContract.balanceOf(userOneAddress)).to.equal(
       BigNumber.from(1)
     );
-    // Second change uri and check balance
-    await contract.connect(account1).setURI("ipfs://");
-    expect(await contract.balanceOf(await account1.getAddress())).to.equal(
+    expect(await bioContract.getURI(userOneAddress)).to.equal(uriOne);
+    // Second change uri and check
+    await expect(bioContract.connect(userOne).setURI(uriTwo)).to.be.not
+      .reverted;
+    expect(await bioContract.balanceOf(userOneAddress)).to.equal(
       BigNumber.from(1)
     );
+    expect(await bioContract.getURI(userOneAddress)).to.equal(uriTwo);
   });
 
   it("Should fail transfer token", async function () {
+    // Init test data
+    const tokenId = "1";
+    // Test transfer
     await expect(
-      contract
-        .connect(account1)
-        .transferFrom(
-          await account1.getAddress(),
-          await account2.getAddress(),
-          "1"
-        )
+      bioContract
+        .connect(userOne)
+        .transferFrom(userOneAddress, userTwoAddress, tokenId)
     ).to.be.revertedWith("Token is non-transferable");
   });
 });
