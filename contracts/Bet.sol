@@ -32,6 +32,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         uint usageFeePercent
     ) public initializer {
         __ERC721_init("dearweb3ibet bet", "DW3IBBET");
+        __Ownable_init();
         _betCheckerAddress = betCheckerAddress;
         _contestAddress = contestAddress;
         _usageAddress = usageAddress;
