@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
 
-contract Contest is IContest, Ownable {
+contract Contest is IContest, OwnableUpgradeable {
     uint private _wavesNumber;
     mapping(uint256 => DataTypes.ContestWave) private _waves;
     mapping(uint256 => DataTypes.ContestWaveParticipant[])
         private _waveParticipants;
+
+    function initialize() public initializer {
+        __Ownable_init();
+    }
 
     function startWave(uint endTimestamp, uint winnersNumber) public onlyOwner {
         // Checks

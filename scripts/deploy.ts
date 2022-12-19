@@ -1,10 +1,14 @@
 import hre, { upgrades, ethers } from "hardhat";
-import { Bet__factory, Bio__factory } from "../typechain-types";
+import {
+  Bet__factory,
+  Bio__factory,
+  Contest__factory,
+} from "../typechain-types";
 
 const contracts: {
   [key: string]: {
     betChecker: string;
-    contest: string;
+    contest: { proxy: string; proxyAdmin: string; impl: string };
     usage: string;
     bet: {
       proxy: string;
@@ -20,7 +24,11 @@ const contracts: {
 } = {
   mumbai: {
     betChecker: "0x3DbF54192Af966DF64Fb7c06a883Ac5d9f204429",
-    contest: "0xB57C5F7BDc214A6A26aaf98FBccc87Fd19102620",
+    contest: {
+      proxy: "0xe347c72CB77e5614E775908d3f43Ea27c8DBd293",
+      proxyAdmin: "0x0d3b20f33e95Cf06f05b9ffD0b34faEED67baCd5",
+      impl: "0x13Ba0a259ee9e02E7a98a69c2941AD5208F6e0e5",
+    },
     usage: "0xc7e9b82765E5edf192D702e11B108cac6D51D186",
     bet: {
       proxy: "0x6BecA207f047Ce5707cB4F0cb942DEFf95C2338D",
@@ -89,21 +97,34 @@ async function main() {
     chainContracts.betChecker === contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🥸 Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
 
   // Deploy contest contract
-  if (chainContracts.contest === "") {
+  if (chainContracts.contest.proxy === "") {
     console.log("\n👟 Start deploy contest contract");
-    const contract = await ethers
-      .getContractFactory("Contest")
-      .then((factory) => factory.deploy());
-    chainContracts.contest = contract.address;
+    const contract = await upgrades.deployProxy(new Contest__factory(deployer));
+    await contract.deployed();
+    chainContracts.contest.proxy = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🥸 Command for vefifying: " +
+        `npx hardhat verify --network ${chain} ${contract.address}`
+    );
+  }
+  // Upgrade contest contract
+  else if (chainContracts.contest.impl === "") {
+    console.log("\n👟 Start upgrade contest contract");
+    const contract = await upgrades.upgradeProxy(
+      chainContracts.contest.proxy,
+      new Contest__factory(deployer)
+    );
+    await contract.deployed();
+    console.log("✅ Contract upgraded");
+    console.log(
+      "🥸 Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
@@ -117,54 +138,54 @@ async function main() {
     chainContracts.usage = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🥸 Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
 
   // Deploy bet contract
-  if (
-    chainContracts.bet.proxy === "" &&
-    chainContracts.betChecker !== "" &&
-    chainContracts.contest !== "" &&
-    chainContracts.usage !== ""
-  ) {
-    console.log("\n👟 Start deploy bet contract");
-    const contract = await upgrades.deployProxy(new Bet__factory(deployer), [
-      chainContracts.betChecker,
-      chainContracts.contest,
-      chainContracts.usage,
-      chainContractsData.bet.contestFeePercent,
-      chainContractsData.bet.usageFeePercent,
-    ]);
-    await contract.deployed();
-    chainContracts.bet.proxy = contract.address;
-    console.log("✅ Contract deployed to " + contract.address);
-    console.log(
-      "Command for vefifying: " +
-        `npx hardhat verify --network ${chain} ${contract.address}`
-    );
+  if (chainContracts.bet.proxy === "") {
+    if (
+      chainContracts.betChecker !== "" &&
+      chainContracts.contest.proxy !== "" &&
+      chainContracts.usage !== ""
+    ) {
+      console.log("\n👟 Start deploy bet contract");
+      const contract = await upgrades.deployProxy(new Bet__factory(deployer), [
+        chainContracts.betChecker,
+        chainContracts.contest,
+        chainContracts.usage,
+        chainContractsData.bet.contestFeePercent,
+        chainContractsData.bet.usageFeePercent,
+      ]);
+      await contract.deployed();
+      chainContracts.bet.proxy = contract.address;
+      console.log("✅ Contract deployed to " + contract.address);
+      console.log(
+        "🥸 Command for vefifying: " +
+          `npx hardhat verify --network ${chain} ${contract.address}`
+      );
+    }
   }
-
   // Upgrade bet contract
-  if (
-    chainContracts.bet.proxy !== "" &&
-    chainContracts.bet.impl === "" &&
-    chainContracts.betChecker !== "" &&
-    chainContracts.contest !== "" &&
-    chainContracts.usage !== ""
-  ) {
-    console.log("\n👟 Start upgrade bet contract");
-    const contract = await upgrades.upgradeProxy(
-      chainContracts.bet.proxy,
-      new Bet__factory(deployer)
-    );
-    await contract.deployed();
-    console.log("✅ Contract upgraded");
-    console.log(
-      "Command for vefifying: " +
-        `npx hardhat verify --network ${chain} ${contract.address}`
-    );
+  else if (chainContracts.bet.impl === "") {
+    if (
+      chainContracts.betChecker !== "" &&
+      chainContracts.contest.proxy !== "" &&
+      chainContracts.usage !== ""
+    ) {
+      console.log("\n👟 Start upgrade bet contract");
+      const contract = await upgrades.upgradeProxy(
+        chainContracts.bet.proxy,
+        new Bet__factory(deployer)
+      );
+      await contract.deployed();
+      console.log("✅ Contract upgraded");
+      console.log(
+        "🥸 Command for vefifying: " +
+          `npx hardhat verify --network ${chain} ${contract.address}`
+      );
+    }
   }
 
   // Deploy bio contract
@@ -175,13 +196,12 @@ async function main() {
     chainContracts.bio.proxy = contract.address;
     console.log("✅ Contract deployed to " + contract.address);
     console.log(
-      "Command for vefifying: " +
+      "🥸 Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
-
   // Upgrade bio contract
-  if (chainContracts.bio.proxy !== "" && chainContracts.bio.impl === "") {
+  else if (chainContracts.bio.impl === "") {
     console.log("\n👟 Start upgrade bio contract");
     const contract = await upgrades.upgradeProxy(
       chainContracts.bio.proxy,
@@ -190,7 +210,7 @@ async function main() {
     await contract.deployed();
     console.log("✅ Contract upgraded");
     console.log(
-      "Command for vefifying: " +
+      "🥸 Command for vefifying: " +
         `npx hardhat verify --network ${chain} ${contract.address}`
     );
   }
