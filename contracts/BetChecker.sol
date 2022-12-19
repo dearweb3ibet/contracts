@@ -4,10 +4,9 @@ pragma solidity ^0.8.9;
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IBetChecker.sol";
+import "./libraries/Constants.sol";
 
 contract BetChecker is IBetChecker, Ownable {
-    uint80 constant SECONDS_PER_DAY = 3600 * 24;
-
     mapping(string => address) internal _feedAddresses;
 
     function setFeedAddresses(
@@ -67,7 +66,7 @@ contract BetChecker is IBetChecker, Ownable {
         view
         returns (uint80 firstRoundToSearch, uint80 numRoundsToSearch)
     {
-        uint256 toTime = fromTime + SECONDS_PER_DAY * daysToFetch;
+        uint256 toTime = fromTime + Constants.SECONDS_PER_DAY * daysToFetch;
 
         (
             uint80 lhRound,
@@ -181,7 +180,7 @@ contract BetChecker is IBetChecker, Ownable {
         } else {
             dataPointsToReturn = dataPointsToFetchPerDay * daysToFetch; // Number of data points to return
         }
-        uint secondsBetweenDataPoints = SECONDS_PER_DAY /
+        uint secondsBetweenDataPoints = Constants.SECONDS_PER_DAY /
             dataPointsToFetchPerDay;
 
         int[] memory prices = new int[](dataPointsToReturn);
