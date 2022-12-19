@@ -61,7 +61,7 @@ describe("Bet", function () {
     accounts = await ethers.getSigners();
     // Init contracts
     betCheckerContract = await ethers
-      .getContractFactory("BetCheckerFake")
+      .getContractFactory("MockBetChecker")
       .then((factory) => factory.deploy());
     await betCheckerContract.setFeedAddresses(
       [feedSymbolEthUsd],

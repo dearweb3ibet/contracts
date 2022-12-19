@@ -2,9 +2,9 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/BetCheckerInterface.sol";
+import "../interfaces/BetCheckerInterface.sol";
 
-contract BetCheckerFake is BetCheckerInterface, Ownable {
+contract MockBetChecker is BetCheckerInterface, Ownable {
     mapping(string => address) internal _feedAddresses;
 
     function setFeedAddresses(
@@ -37,11 +37,11 @@ contract BetCheckerFake is BetCheckerInterface, Ownable {
      * Return always a negative checking result.
      */
     function isPriceExist(
-        string memory symbol,
-        uint dayStartTimestamp,
-        int minPrice,
-        int maxPrice
-    ) external view returns (bool, int, int) {
+        string memory,
+        uint,
+        int,
+        int
+    ) external pure returns (bool, int, int) {
         return (false, 0, 0);
     }
 }
