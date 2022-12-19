@@ -6,39 +6,17 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IBetChecker.sol";
 import "./interfaces/IContest.sol";
+import "./libraries/DataTypes.sol";
 
 contract Bet is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
-    struct Params {
-        uint createdTimestamp;
-        address creatorAddress;
-        uint creatorFee;
-        string symbol;
-        int targetMinPrice;
-        int targetMaxPrice;
-        uint targetTimestamp;
-        uint participationDeadlineTimestamp;
-        uint feeForSuccess;
-        uint feeForFailure;
-        bool isClosed;
-        bool isSuccessful;
-    }
-
-    struct Participant {
-        uint addedTimestamp;
-        address accountAddress;
-        uint fee;
-        bool isFeeForSuccess;
-        uint winning;
-    }
-
     event URISet(uint256 indexed tokenId, string tokenURI);
-    event ParamsSet(uint256 indexed tokenId, Params params);
+    event ParamsSet(uint256 indexed tokenId, DataTypes.BetParams params);
     event ParticipantSet(
         uint256 indexed tokenId,
         address indexed participantAccountAddress,
-        Participant participant
+        DataTypes.BetParticipant participant
     );
 
     address private _betCheckerAddress;
@@ -47,8 +25,8 @@ contract Bet is ERC721URIStorage, Ownable {
     uint _contestFeePercent;
     uint _usageFeePercent;
     Counters.Counter private _tokenIds;
-    mapping(uint256 => Params) internal _tokenParams;
-    mapping(uint256 => Participant[]) internal _tokenParticipants;
+    mapping(uint256 => DataTypes.BetParams) internal _tokenParams;
+    mapping(uint256 => DataTypes.BetParticipant[]) internal _tokenParticipants;
 
     constructor(
         address betCheckerAddress,
@@ -84,7 +62,7 @@ contract Bet is ERC721URIStorage, Ownable {
         uint256 newTokenId = _tokenIds.current();
         _mint(msg.sender, newTokenId);
         // Set params
-        Params memory tokenParams = Params(
+        DataTypes.BetParams memory tokenParams = DataTypes.BetParams(
             block.timestamp,
             msg.sender,
             fee,
@@ -101,13 +79,8 @@ contract Bet is ERC721URIStorage, Ownable {
         _tokenParams[newTokenId] = tokenParams;
         emit ParamsSet(newTokenId, tokenParams);
         // Add participant
-        Participant memory tokenParticipant = Participant(
-            block.timestamp,
-            msg.sender,
-            fee,
-            true,
-            0
-        );
+        DataTypes.BetParticipant memory tokenParticipant = DataTypes
+            .BetParticipant(block.timestamp, msg.sender, fee, true, 0);
         _tokenParticipants[newTokenId].push(tokenParticipant);
         emit ParticipantSet(newTokenId, msg.sender, tokenParticipant);
         // Set uri
@@ -129,17 +102,18 @@ contract Bet is ERC721URIStorage, Ownable {
         require(_exists(tokenId), "token is not exists");
         require(msg.value == fee, "message value is not equal to fee");
         // Add participant
-        Participant memory tokenParticipant = Participant(
-            block.timestamp,
-            msg.sender,
-            fee,
-            isFeeForSuccess,
-            0
-        );
+        DataTypes.BetParticipant memory tokenParticipant = DataTypes
+            .BetParticipant(
+                block.timestamp,
+                msg.sender,
+                fee,
+                isFeeForSuccess,
+                0
+            );
         _tokenParticipants[tokenId].push(tokenParticipant);
         emit ParticipantSet(tokenId, msg.sender, tokenParticipant);
         // Update token params
-        Params storage tokenParams = _tokenParams[tokenId];
+        DataTypes.BetParams storage tokenParams = _tokenParams[tokenId];
         if (isFeeForSuccess) {
             tokenParams.feeForSuccess += fee;
         } else {
@@ -155,7 +129,7 @@ contract Bet is ERC721URIStorage, Ownable {
         // Checks
         require(_exists(tokenId), "token is not exists");
         // Define whether a bet is successful or not
-        Params storage tokenParams = _tokenParams[tokenId];
+        DataTypes.BetParams storage tokenParams = _tokenParams[tokenId];
         (bool isBetSuccessful, , ) = IBetChecker(_betCheckerAddress)
             .isPriceExist(
                 tokenParams.symbol,
@@ -200,7 +174,9 @@ contract Bet is ERC721URIStorage, Ownable {
         // Send fee and winning to winners
         uint winnersNumber;
         for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
-            Participant storage participant = _tokenParticipants[tokenId][i];
+            DataTypes.BetParticipant storage participant = _tokenParticipants[
+                tokenId
+            ][i];
             // Calculate winning
             uint winning;
             if (participant.isFeeForSuccess && isBetSuccessful) {
@@ -238,7 +214,9 @@ contract Bet is ERC721URIStorage, Ownable {
             _tokenParticipants[tokenId].length
         );
         for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
-            Participant memory participant = _tokenParticipants[tokenId][i];
+            DataTypes.BetParticipant memory participant = _tokenParticipants[
+                tokenId
+            ][i];
             participantAddresses[i] = participant.accountAddress;
             participantWinnings[i] = participant.winning;
         }
@@ -288,13 +266,15 @@ contract Bet is ERC721URIStorage, Ownable {
         _usageFeePercent = usageFeePercent;
     }
 
-    function getParams(uint256 tokenId) public view returns (Params memory) {
+    function getParams(
+        uint256 tokenId
+    ) public view returns (DataTypes.BetParams memory) {
         return _tokenParams[tokenId];
     }
 
     function getParticipants(
         uint256 tokenId
-    ) public view returns (Participant[] memory) {
+    ) public view returns (DataTypes.BetParticipant[] memory) {
         return _tokenParticipants[tokenId];
     }
 

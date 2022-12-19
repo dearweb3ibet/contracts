@@ -3,36 +3,22 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IContest.sol";
+import "./libraries/DataTypes.sol";
 
 contract Contest is IContest, Ownable {
-    struct Wave {
-        uint startTimestamp;
-        uint endTimestamp;
-        uint closeTimestamp;
-        uint winnersNumber;
-        uint winning;
-        address[] winners;
-    }
-
-    struct WaveParticipant {
-        address accountAddress;
-        int successes;
-        int failures;
-        int variance;
-    }
-
     event Receiving(address sender, uint value);
-    event WaveCreate(uint index, Wave wave);
-    event WaveClose(uint index, Wave wave);
+    event WaveCreate(uint index, DataTypes.ContestWave wave);
+    event WaveClose(uint index, DataTypes.ContestWave wave);
     event WaveParticipantSet(
         uint index,
         address indexed participantAccountAddress,
-        WaveParticipant participant
+        DataTypes.ContestWaveParticipant participant
     );
 
     uint private _wavesNumber;
-    mapping(uint256 => Wave) private _waves;
-    mapping(uint256 => WaveParticipant[]) private _waveParticipants;
+    mapping(uint256 => DataTypes.ContestWave) private _waves;
+    mapping(uint256 => DataTypes.ContestWaveParticipant[])
+        private _waveParticipants;
 
     function startWave(uint endTimestamp, uint winnersNumber) public onlyOwner {
         // Checks
@@ -43,7 +29,7 @@ contract Contest is IContest, Ownable {
             "last wave is not closed"
         );
         // Create wave
-        Wave storage wave = _waves[_wavesNumber++];
+        DataTypes.ContestWave storage wave = _waves[_wavesNumber++];
         wave.startTimestamp = block.timestamp;
         wave.endTimestamp = endTimestamp;
         wave.winnersNumber = winnersNumber;
@@ -60,7 +46,7 @@ contract Contest is IContest, Ownable {
             "number of winners is incorrect"
         );
         // Close wave
-        Wave storage wave = _waves[index];
+        DataTypes.ContestWave storage wave = _waves[index];
         wave.closeTimestamp = block.timestamp;
         wave.winning = address(this).balance;
         wave.winners = winners;
@@ -81,13 +67,15 @@ contract Contest is IContest, Ownable {
         return _wavesNumber - 1;
     }
 
-    function getWave(uint index) public view returns (Wave memory) {
+    function getWave(
+        uint index
+    ) public view returns (DataTypes.ContestWave memory) {
         return _waves[index];
     }
 
     function getWaveParticipants(
         uint index
-    ) public view returns (WaveParticipant[] memory) {
+    ) public view returns (DataTypes.ContestWaveParticipant[] memory) {
         return _waveParticipants[index];
     }
 
@@ -102,15 +90,14 @@ contract Contest is IContest, Ownable {
     ) public {
         // Get last wave
         uint lastWaveIndex = getLastWaveIndex();
-        Wave storage wave = _waves[lastWaveIndex];
+        DataTypes.ContestWave storage wave = _waves[lastWaveIndex];
         // Check last wave
         if (wave.startTimestamp == 0 || wave.closeTimestamp != 0) {
             return;
         }
         // Get last wave participants
-        WaveParticipant[] storage waveParticipants = _waveParticipants[
-            lastWaveIndex
-        ];
+        DataTypes.ContestWaveParticipant[]
+            storage waveParticipants = _waveParticipants[lastWaveIndex];
         // Process every bet participant
         for (uint i = 0; i < betParticipantAddresses.length; i++) {
             // Try find wave participant by bet participant
@@ -141,12 +128,13 @@ contract Contest is IContest, Ownable {
             // Create wave participant if not found by bet participant
             if (!isWaveParticipantFound) {
                 // Create wave
-                WaveParticipant memory waveParticipant = WaveParticipant(
-                    betParticipantAddresses[i],
-                    betParticipantWinnings[i] > 0 ? int(1) : int(0),
-                    betParticipantWinnings[i] > 0 ? int(0) : int(1),
-                    betParticipantWinnings[i] > 0 ? int(1) : int(-1)
-                );
+                DataTypes.ContestWaveParticipant
+                    memory waveParticipant = DataTypes.ContestWaveParticipant(
+                        betParticipantAddresses[i],
+                        betParticipantWinnings[i] > 0 ? int(1) : int(0),
+                        betParticipantWinnings[i] > 0 ? int(0) : int(1),
+                        betParticipantWinnings[i] > 0 ? int(1) : int(-1)
+                    );
                 waveParticipants.push(waveParticipant);
                 // Emit event
                 emit WaveParticipantSet(
