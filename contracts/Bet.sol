@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IBetChecker.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
 
-contract Bet is ERC721URIStorage, Ownable {
+/**
+ * Contract for create, close and participate in bets.
+ */
+contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     using Counters for Counters.Counter;
 
     address private _betCheckerAddress;
@@ -17,17 +20,18 @@ contract Bet is ERC721URIStorage, Ownable {
     address private _usageAddress;
     uint _contestFeePercent;
     uint _usageFeePercent;
-    Counters.Counter private _tokenIds;
-    mapping(uint256 => DataTypes.BetParams) internal _tokenParams;
-    mapping(uint256 => DataTypes.BetParticipant[]) internal _tokenParticipants;
+    Counters.Counter private _counter;
+    mapping(uint256 => DataTypes.BetParams) internal _params;
+    mapping(uint256 => DataTypes.BetParticipant[]) internal _participants;
 
-    constructor(
+    function initialize(
         address betCheckerAddress,
         address contestAddress,
         address usageAddress,
         uint contestFeePercent,
         uint usageFeePercent
-    ) ERC721("dearweb3ibet bet", "DW3IBBET") {
+    ) public initializer {
+        __ERC721_init("dearweb3ibet bet", "DW3IBBET");
         _betCheckerAddress = betCheckerAddress;
         _contestAddress = contestAddress;
         _usageAddress = usageAddress;
@@ -50,9 +54,9 @@ contract Bet is ERC721URIStorage, Ownable {
         // Checks
         require(msg.value == fee, "message value is not equal to fee");
         // Update counter
-        _tokenIds.increment();
+        _counter.increment();
         // Mint token
-        uint256 newTokenId = _tokenIds.current();
+        uint256 newTokenId = _counter.current();
         _mint(msg.sender, newTokenId);
         // Set params
         DataTypes.BetParams memory tokenParams = DataTypes.BetParams(
@@ -69,12 +73,12 @@ contract Bet is ERC721URIStorage, Ownable {
             false,
             false
         );
-        _tokenParams[newTokenId] = tokenParams;
+        _params[newTokenId] = tokenParams;
         emit Events.BetParamsSet(newTokenId, tokenParams);
         // Add participant
         DataTypes.BetParticipant memory tokenParticipant = DataTypes
             .BetParticipant(block.timestamp, msg.sender, fee, true, 0);
-        _tokenParticipants[newTokenId].push(tokenParticipant);
+        _participants[newTokenId].push(tokenParticipant);
         emit Events.BetParticipantSet(newTokenId, msg.sender, tokenParticipant);
         // Set uri
         _setTokenURI(newTokenId, uri);
@@ -103,10 +107,10 @@ contract Bet is ERC721URIStorage, Ownable {
                 isFeeForSuccess,
                 0
             );
-        _tokenParticipants[tokenId].push(tokenParticipant);
+        _participants[tokenId].push(tokenParticipant);
         emit Events.BetParticipantSet(tokenId, msg.sender, tokenParticipant);
         // Update token params
-        DataTypes.BetParams storage tokenParams = _tokenParams[tokenId];
+        DataTypes.BetParams storage tokenParams = _params[tokenId];
         if (isFeeForSuccess) {
             tokenParams.feeForSuccess += fee;
         } else {
@@ -122,7 +126,7 @@ contract Bet is ERC721URIStorage, Ownable {
         // Checks
         require(_exists(tokenId), "token is not exists");
         // Define whether a bet is successful or not
-        DataTypes.BetParams storage tokenParams = _tokenParams[tokenId];
+        DataTypes.BetParams storage tokenParams = _params[tokenId];
         (bool isBetSuccessful, , ) = IBetChecker(_betCheckerAddress)
             .isPriceExist(
                 tokenParams.symbol,
@@ -166,8 +170,8 @@ contract Bet is ERC721URIStorage, Ownable {
         require(sent, "failed to send fee to usage");
         // Send fee and winning to winners
         uint winnersNumber;
-        for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
-            DataTypes.BetParticipant storage participant = _tokenParticipants[
+        for (uint i = 0; i < _participants[tokenId].length; i++) {
+            DataTypes.BetParticipant storage participant = _participants[
                 tokenId
             ][i];
             // Calculate winning
@@ -201,13 +205,13 @@ contract Bet is ERC721URIStorage, Ownable {
         }
         // Send participants and their winnings contest contract
         address[] memory participantAddresses = new address[](
-            _tokenParticipants[tokenId].length
+            _participants[tokenId].length
         );
         uint[] memory participantWinnings = new uint[](
-            _tokenParticipants[tokenId].length
+            _participants[tokenId].length
         );
-        for (uint i = 0; i < _tokenParticipants[tokenId].length; i++) {
-            DataTypes.BetParticipant memory participant = _tokenParticipants[
+        for (uint i = 0; i < _participants[tokenId].length; i++) {
+            DataTypes.BetParticipant memory participant = _participants[
                 tokenId
             ][i];
             participantAddresses[i] = participant.accountAddress;
@@ -262,13 +266,13 @@ contract Bet is ERC721URIStorage, Ownable {
     function getParams(
         uint256 tokenId
     ) public view returns (DataTypes.BetParams memory) {
-        return _tokenParams[tokenId];
+        return _params[tokenId];
     }
 
     function getParticipants(
         uint256 tokenId
     ) public view returns (DataTypes.BetParticipant[] memory) {
-        return _tokenParticipants[tokenId];
+        return _participants[tokenId];
     }
 
     function getBetCheckerFeedAddress(

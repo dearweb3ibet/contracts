@@ -1,6 +1,16 @@
-import { BigNumber, Contract, Signer } from "ethers";
-import { ethers } from "hardhat";
 import { expect } from "chai";
+import { BigNumber, Signer } from "ethers";
+import { ethers } from "hardhat";
+import {
+  Bet,
+  Bet__factory,
+  Contest,
+  Contest__factory,
+  IBetChecker,
+  MockBetChecker__factory,
+  Usage,
+  Usage__factory,
+} from "../typechain-types";
 
 describe("Bet", function () {
   // Constants
@@ -48,46 +58,39 @@ describe("Bet", function () {
   );
   // Accounts
   let accounts: Array<Signer>;
+  let deployer: Signer;
   // Contracts
-  let betCheckerContract: Contract;
-  let contestContract: Contract;
-  let usageContract: Contract;
-  let betContract: Contract;
+  let betCheckerContract: IBetChecker;
+  let contestContract: Contest;
+  let usageContract: Usage;
+  let betContract: Bet;
   // Helpful variables
   let lastTokenId = 0;
 
   before(async function () {
     // Init accounts
     accounts = await ethers.getSigners();
+    deployer = accounts[0];
     // Init contracts
-    betCheckerContract = await ethers
-      .getContractFactory("MockBetChecker")
-      .then((factory) => factory.deploy());
-    await betCheckerContract.setFeedAddresses(
+    betCheckerContract = await new MockBetChecker__factory(deployer).deploy();
+    betCheckerContract.setFeedAddresses(
       [feedSymbolEthUsd],
       [feedAddressEthUsd]
     );
-    contestContract = await ethers
-      .getContractFactory("Contest")
-      .then((factory) => factory.deploy());
+    contestContract = await new Contest__factory(deployer).deploy();
     await contestContract.startWave(
       contestWaveEndTimestamp,
       contestWaveWinnersNumber
     );
-    usageContract = await ethers
-      .getContractFactory("Usage")
-      .then((factory) => factory.deploy());
-    betContract = await ethers
-      .getContractFactory("Bet")
-      .then((factory) =>
-        factory.deploy(
-          betCheckerContract.address,
-          contestContract.address,
-          usageContract.address,
-          contestFeePercent,
-          usageFeePercent
-        )
-      );
+    usageContract = await new Usage__factory(deployer).deploy();
+    betContract = await new Bet__factory(deployer).deploy();
+    await betContract.initialize(
+      betCheckerContract.address,
+      contestContract.address,
+      usageContract.address,
+      contestFeePercent,
+      usageFeePercent
+    );
   });
 
   it("Should check bet checker", async function () {
