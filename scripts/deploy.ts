@@ -6,7 +6,7 @@ const contracts: any = {
     contest: "0xB57C5F7BDc214A6A26aaf98FBccc87Fd19102620",
     usage: "0xc7e9b82765E5edf192D702e11B108cac6D51D186",
     bet: "0x9B8Bc148030026081F6548fc053358C9Ff4D75Ff",
-    bio: "0x752ab4DDf258eec8857a9115fAed1E3afE1Abbe5",
+    bio: "",
   },
 };
 
@@ -27,10 +27,10 @@ async function main() {
   // Define chain
   const chain = hre.hardhatArguments.network;
   if (!chain) {
-    console.log("❌ Chain is not defined");
+    console.log("\n❌ Chain is not defined");
     return;
   }
-  console.log("Running on chain: " + chain);
+  console.log("\nRunning on chain: " + chain);
 
   // Define chain data
   const chainContracts = contracts[chain];
@@ -38,7 +38,7 @@ async function main() {
 
   // Deploy bet checker contract
   if (chainContracts.betChecker === "") {
-    console.log("👟 Start deploy bet checker contract");
+    console.log("\n👟 Start deploy bet checker contract");
     const contract = await ethers
       .getContractFactory("BetChecker")
       .then((factory) => factory.deploy());
@@ -56,7 +56,7 @@ async function main() {
 
   // Deploy contest contract
   if (chainContracts.contest === "") {
-    console.log("👟 Start deploy contest contract");
+    console.log("\n👟 Start deploy contest contract");
     const contract = await ethers
       .getContractFactory("Contest")
       .then((factory) => factory.deploy());
@@ -70,7 +70,7 @@ async function main() {
 
   // Deploy usage contract
   if (chainContracts.usage === "") {
-    console.log("👟 Start deploy usage contract");
+    console.log("\n👟 Start deploy usage contract");
     const contract = await ethers
       .getContractFactory("Usage")
       .then((factory) => factory.deploy());
@@ -88,7 +88,7 @@ async function main() {
     chainContracts.contest !== "" &&
     chainContracts.usage !== ""
   ) {
-    console.log("👟 Start deploy bet contract");
+    console.log("\n👟 Start deploy bet contract");
     const contract = await ethers
       .getContractFactory("Bet")
       .then((factory) =>
@@ -109,7 +109,7 @@ async function main() {
   }
 
   if (chainContracts.bio === "") {
-    console.log("👟 Start deploy bio contract");
+    console.log("\n👟 Start deploy bio contract");
     const contract = await ethers
       .getContractFactory("Bio")
       .then((factory) => factory.deploy());
