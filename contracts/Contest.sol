@@ -2,12 +2,15 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
 
 contract Contest is IContest, OwnableUpgradeable {
-    uint private _wavesNumber;
+    using Counters for Counters.Counter;
+
+    Counters.Counter private _counter;
     mapping(uint256 => DataTypes.ContestWave) private _waves;
     mapping(uint256 => DataTypes.ContestWaveParticipant[])
         private _waveParticipants;
@@ -19,34 +22,36 @@ contract Contest is IContest, OwnableUpgradeable {
     function startWave(uint endTimestamp, uint winnersNumber) public onlyOwner {
         // Checks
         require(
-            _wavesNumber == 0 ||
-                (_wavesNumber != 0 &&
-                    _waves[_wavesNumber - 1].closeTimestamp != 0),
+            _counter.current() == 0 ||
+                (_counter.current() != 0 &&
+                    _waves[_counter.current()].closeTimestamp != 0),
             "last wave is not closed"
         );
+        // Update counter
+        _counter.increment();
         // Create wave
-        DataTypes.ContestWave storage wave = _waves[_wavesNumber++];
+        DataTypes.ContestWave storage wave = _waves[_counter.current()];
         wave.startTimestamp = block.timestamp;
         wave.endTimestamp = endTimestamp;
         wave.winnersNumber = winnersNumber;
-        emit Events.ContestWaveCreated(_wavesNumber - 1, wave);
+        emit Events.ContestWaveCreated(_counter.current(), wave);
     }
 
     // TODO: Check that end date allows to close wave
-    function closeWave(uint index, address[] memory winners) public onlyOwner {
+    function closeWave(uint id, address[] memory winners) public onlyOwner {
         // Checks
-        require(_waves[index].startTimestamp != 0, "wave is not started");
-        require(_waves[index].closeTimestamp == 0, "wave is already closed");
+        require(_waves[id].startTimestamp != 0, "wave is not started");
+        require(_waves[id].closeTimestamp == 0, "wave is already closed");
         require(
-            winners.length == _waves[index].winnersNumber,
+            winners.length == _waves[id].winnersNumber,
             "number of winners is incorrect"
         );
         // Close wave
-        DataTypes.ContestWave storage wave = _waves[index];
+        DataTypes.ContestWave storage wave = _waves[id];
         wave.closeTimestamp = block.timestamp;
         wave.winning = address(this).balance;
         wave.winners = winners;
-        emit Events.ContestWaveClosed(index, wave);
+        emit Events.ContestWaveClosed(id, wave);
         // Send winnings
         uint winningValue = address(this).balance / wave.winnersNumber;
         for (uint i = 0; i < winners.length; i++) {
@@ -55,24 +60,20 @@ contract Contest is IContest, OwnableUpgradeable {
         }
     }
 
-    function getWavesNumber() public view returns (uint) {
-        return _wavesNumber;
-    }
-
-    function getLastWaveIndex() public view returns (uint) {
-        return _wavesNumber - 1;
+    function getCurrentCounter() public view returns (uint) {
+        return _counter.current();
     }
 
     function getWave(
-        uint index
+        uint id
     ) public view returns (DataTypes.ContestWave memory) {
-        return _waves[index];
+        return _waves[id];
     }
 
     function getWaveParticipants(
-        uint index
+        uint id
     ) public view returns (DataTypes.ContestWaveParticipant[] memory) {
-        return _waveParticipants[index];
+        return _waveParticipants[id];
     }
 
     /**
@@ -84,16 +85,14 @@ contract Contest is IContest, OwnableUpgradeable {
         address[] memory betParticipantAddresses,
         uint[] memory betParticipantWinnings
     ) public {
-        // Get last wave
-        uint lastWaveIndex = getLastWaveIndex();
-        DataTypes.ContestWave storage wave = _waves[lastWaveIndex];
-        // Check last wave
+        // Get and check last wave
+        DataTypes.ContestWave storage wave = _waves[_counter.current()];
         if (wave.startTimestamp == 0 || wave.closeTimestamp != 0) {
             return;
         }
         // Get last wave participants
         DataTypes.ContestWaveParticipant[]
-            storage waveParticipants = _waveParticipants[lastWaveIndex];
+            storage waveParticipants = _waveParticipants[_counter.current()];
         // Process every bet participant
         for (uint i = 0; i < betParticipantAddresses.length; i++) {
             // Try find wave participant by bet participant
@@ -115,7 +114,7 @@ contract Contest is IContest, OwnableUpgradeable {
                         waveParticipants[j].failures;
                     // Emit event
                     emit Events.ContestWaveParticipantSet(
-                        lastWaveIndex,
+                        _counter.current(),
                         waveParticipants[j].accountAddress,
                         waveParticipants[j]
                     );
@@ -134,7 +133,7 @@ contract Contest is IContest, OwnableUpgradeable {
                 waveParticipants.push(waveParticipant);
                 // Emit event
                 emit Events.ContestWaveParticipantSet(
-                    lastWaveIndex,
+                    _counter.current(),
                     waveParticipant.accountAddress,
                     waveParticipant
                 );

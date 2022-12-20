@@ -225,9 +225,9 @@ describe("Bet", function () {
       ]
     );
     // Check contest wave participants
-    const contestLastWaveIndex = await contestContract.getLastWaveIndex();
+    const contestLastWaveId = await contestContract.getCurrentCounter();
     const contestParticipants = await contestContract.getWaveParticipants(
-      contestLastWaveIndex
+      contestLastWaveId
     );
     // Check bet creator
     expect(contestParticipants[0].accountAddress).to.equal(

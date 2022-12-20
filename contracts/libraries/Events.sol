@@ -17,10 +17,10 @@ library Events {
     );
 
     // Contest
-    event ContestWaveCreated(uint index, DataTypes.ContestWave wave);
-    event ContestWaveClosed(uint index, DataTypes.ContestWave wave);
+    event ContestWaveCreated(uint id, DataTypes.ContestWave wave);
+    event ContestWaveClosed(uint id, DataTypes.ContestWave wave);
     event ContestWaveParticipantSet(
-        uint index,
+        uint id,
         address indexed participantAccountAddress,
         DataTypes.ContestWaveParticipant participant
     );
