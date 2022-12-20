@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IBetChecker.sol";
 import "./libraries/Constants.sol";
 
+/**
+ * TODO: Add docs
+ */
 contract BetChecker is IBetChecker, Ownable {
     mapping(string => address) internal _feedAddresses;
 

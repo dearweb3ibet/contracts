@@ -40,9 +40,12 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         _usageFeePercent = usageFeePercent;
     }
 
+    // TODO: Check that message value greater than 0
     // TODO: Check that target timestamp is not passed
     // TODO: Check that participation deadline timestamp is not passed
     // TODO: Check that symbol is supported by bet checker contract
+    // TODO: Check that target min price should be less then target max price
+    // TODO: Check that bet checker can process input symbol
     function create(
         string memory uri,
         uint fee,

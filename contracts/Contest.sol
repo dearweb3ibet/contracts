@@ -7,6 +7,9 @@ import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
 
+/**
+ * TODO: Add docs
+ */
 contract Contest is IContest, OwnableUpgradeable {
     using Counters for Counters.Counter;
 
