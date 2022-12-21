@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URISto
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IBetChecker.sol";
+import "./interfaces/IHub.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
@@ -16,9 +17,7 @@ import "./libraries/Errors.sol";
 contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     using Counters for Counters.Counter;
 
-    address private _betCheckerAddress;
-    address private _contestAddress;
-    address private _usageAddress;
+    address private _hubAddress;
     uint _contestFeePercent;
     uint _usageFeePercent;
     Counters.Counter private _counter;
@@ -26,17 +25,13 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     mapping(uint256 => DataTypes.BetParticipant[]) internal _participants;
 
     function initialize(
-        address betCheckerAddress,
-        address contestAddress,
-        address usageAddress,
+        address hubAddress,
         uint contestFeePercent,
         uint usageFeePercent
     ) public initializer {
         __ERC721_init("dearweb3ibet bet", "DW3IBBET");
         __Ownable_init();
-        _betCheckerAddress = betCheckerAddress;
-        _contestAddress = contestAddress;
-        _usageAddress = usageAddress;
+        _hubAddress = hubAddress;
         _contestFeePercent = contestFeePercent;
         _usageFeePercent = usageFeePercent;
     }
@@ -130,15 +125,18 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     function close(uint256 tokenId) public {
         // Checks
         require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
-        // Define whether a bet is successful or not
+        // Load token params
         DataTypes.BetParams storage tokenParams = _params[tokenId];
-        (bool isBetSuccessful, , ) = IBetChecker(_betCheckerAddress)
-            .isPriceExist(
-                tokenParams.symbol,
-                tokenParams.targetTimestamp,
-                tokenParams.targetMinPrice,
-                tokenParams.targetMaxPrice
-            );
+        // Define whether a bet is successful or not
+        IBetChecker betChecker = IBetChecker(
+            IHub(_hubAddress).getBetCheckerAddress()
+        );
+        (bool isBetSuccessful, , ) = betChecker.isPriceExist(
+            tokenParams.symbol,
+            tokenParams.targetTimestamp,
+            tokenParams.targetMinPrice,
+            tokenParams.targetMaxPrice
+        );
         // Update token params
         tokenParams.isClosed = true;
         tokenParams.isSuccessful = isBetSuccessful;
@@ -168,10 +166,14 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         }
         // Send fee to contest contract
         bool sent;
-        (sent, ) = _contestAddress.call{value: feeForContest}("");
+        (sent, ) = IHub(_hubAddress).getContestAddress().call{
+            value: feeForContest
+        }("");
         require(sent, Errors.FAILED_TO_SEND_FEE_TO_CONTEST);
         // Send fee to usage contract
-        (sent, ) = _usageAddress.call{value: feeForUsage}("");
+        (sent, ) = IHub(_hubAddress).getUsageAddress().call{value: feeForUsage}(
+            ""
+        );
         require(sent, Errors.FAILED_TO_SEND_FEE_TO_USAGE);
         // Send fee and winning to winners
         uint winnersNumber;
@@ -222,34 +224,18 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
             participantAddresses[i] = participant.accountAddress;
             participantWinnings[i] = participant.winning;
         }
-        IContest(_contestAddress).processBetParticipants(
+        IContest(IHub(_hubAddress).getContestAddress()).processBetParticipants(
             participantAddresses,
             participantWinnings
         );
     }
 
-    function getBetCheckerAddress() public view returns (address) {
-        return _betCheckerAddress;
+    function getHubAddress() public view returns (address) {
+        return _hubAddress;
     }
 
-    function setBetCheckerAddress(address betCheckerAddress) public onlyOwner {
-        _betCheckerAddress = betCheckerAddress;
-    }
-
-    function getContestAddress() public view returns (address) {
-        return _contestAddress;
-    }
-
-    function setContestAddress(address contestAddress) public onlyOwner {
-        _contestAddress = contestAddress;
-    }
-
-    function getUsageAddress() public view returns (address) {
-        return _usageAddress;
-    }
-
-    function setUsageAddress(address usageAddress) public onlyOwner {
-        _usageAddress = usageAddress;
+    function setHubAddress(address hubAddress) public onlyOwner {
+        _hubAddress = hubAddress;
     }
 
     function getContestFeePercent() public view returns (uint) {
@@ -278,11 +264,5 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         uint256 tokenId
     ) public view returns (DataTypes.BetParticipant[] memory) {
         return _participants[tokenId];
-    }
-
-    function getBetCheckerFeedAddress(
-        string memory feedSymbol
-    ) public view returns (address) {
-        return IBetChecker(_betCheckerAddress).getFeedAddress(feedSymbol);
     }
 }

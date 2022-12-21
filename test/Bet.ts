@@ -6,6 +6,8 @@ import {
   Bet__factory,
   Contest,
   Contest__factory,
+  Hub,
+  Hub__factory,
   IBetChecker,
   MockBetChecker__factory,
   Usage,
@@ -60,6 +62,7 @@ describe("Bet", function () {
   let accounts: Array<Signer>;
   let deployer: Signer;
   // Contracts
+  let hubContract: Hub;
   let betCheckerContract: IBetChecker;
   let contestContract: Contest;
   let usageContract: Usage;
@@ -71,36 +74,41 @@ describe("Bet", function () {
     // Init accounts
     accounts = await ethers.getSigners();
     deployer = accounts[0];
-    // Init contracts
+    // Deploy hub contract
+    hubContract = await new Hub__factory(deployer).deploy();
+    await hubContract.initialize(
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero
+    );
+    // Deploy bet checker contract
     betCheckerContract = await new MockBetChecker__factory(deployer).deploy();
     betCheckerContract.setFeedAddresses(
       [feedSymbolEthUsd],
       [feedAddressEthUsd]
     );
+    await hubContract.setBetCheckerAddress(betCheckerContract.address);
+    // Deploy contest contract
     contestContract = await new Contest__factory(deployer).deploy();
     await contestContract.initialize();
     await contestContract.startWave(
       contestWaveEndTimestamp,
       contestWaveWinnersNumber
     );
+    await hubContract.setContestAddress(contestContract.address);
+    // Deploy usage contract
     usageContract = await new Usage__factory(deployer).deploy();
+    await hubContract.setUsageAddress(usageContract.address);
+    // Deploy bet contract
     betContract = await new Bet__factory(deployer).deploy();
     await betContract.initialize(
-      betCheckerContract.address,
-      contestContract.address,
-      usageContract.address,
+      hubContract.address,
       contestFeePercent,
       usageFeePercent
     );
-  });
-
-  it("Should check bet checker", async function () {
-    expect(await betContract.getBetCheckerAddress()).to.equal(
-      betCheckerContract.address
-    );
-    expect(
-      await betContract.getBetCheckerFeedAddress(feedSymbolEthUsd)
-    ).to.equal(feedAddressEthUsd);
+    await hubContract.setBetAddress(betContract.address);
   });
 
   it("Should create bet", async function () {
