@@ -1,9 +1,10 @@
 import { ethers } from "hardhat";
+import { deployedContracts } from "./helpers/constants";
 
 async function main() {
   // Init data
   const accounts = await ethers.getSigners();
-  const betContractAddress = "0xB5449BBE1522DE348fa4519d233f6f37aaA6F7C2";
+  const betContractAddress = deployedContracts.mumbai.bet.proxy;
 
   // Run some functions
   let transaction;
