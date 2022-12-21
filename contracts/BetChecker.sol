@@ -5,6 +5,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IBetChecker.sol";
 import "./libraries/Constants.sol";
+import "./libraries/Errors.sol";
 
 /**
  * TODO: Add docs
@@ -18,7 +19,7 @@ contract BetChecker is IBetChecker, Ownable {
     ) public onlyOwner {
         require(
             feedSymbols.length == feedAddresses.length,
-            "lenghs of input arrays must be the same"
+            Errors.LENGTH_OF_INPUT_ARRAYS_MUST_BE_THE_SAME
         );
         for (uint i = 0; i < feedSymbols.length; i++) {
             _feedAddresses[feedSymbols[i]] = feedAddresses[i];
@@ -265,10 +266,13 @@ contract BetChecker is IBetChecker, Ownable {
         int maxPrice
     ) external view returns (bool, int, int) {
         // Check input data
-        require(minPrice <= maxPrice, "min price is higher than max price");
+        require(
+            minPrice <= maxPrice,
+            Errors.MIN_PRICE_MUST_BE_LOWER_THAN_MAX_PRICE
+        );
         require(
             _feedAddresses[symbol] != address(0),
-            "feed for symbol is not found"
+            Errors.NOT_FOUND_FEED_FOR_SYMBOL
         );
         // Get day min and max prices
         (int dayMinPrice, int dayMaxPrice) = getMinMaxPrices(

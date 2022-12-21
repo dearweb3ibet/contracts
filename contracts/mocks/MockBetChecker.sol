@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IBetChecker.sol";
+import "../libraries/Errors.sol";
 
 /**
  * TODO: Add docs
@@ -16,7 +17,7 @@ contract MockBetChecker is IBetChecker, Ownable {
     ) public onlyOwner {
         require(
             feedSymbols.length == feedAddresses.length,
-            "lenghs of input arrays must be the same"
+            Errors.LENGTH_OF_INPUT_ARRAYS_MUST_BE_THE_SAME
         );
         for (uint i = 0; i < feedSymbols.length; i++) {
             _feedAddresses[feedSymbols[i]] = feedAddresses[i];

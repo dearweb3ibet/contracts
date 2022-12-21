@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
+import "./libraries/Errors.sol";
 
 /**
  * TODO: Add docs
@@ -28,7 +29,7 @@ contract Contest is IContest, OwnableUpgradeable {
             _counter.current() == 0 ||
                 (_counter.current() != 0 &&
                     _waves[_counter.current()].closeTimestamp != 0),
-            "last wave is not closed"
+            Errors.LAST_WAVE_IS_NOT_CLOSED
         );
         // Update counter
         _counter.increment();
@@ -43,11 +44,11 @@ contract Contest is IContest, OwnableUpgradeable {
     // TODO: Check that end date allows to close wave
     function closeWave(uint id, address[] memory winners) public onlyOwner {
         // Checks
-        require(_waves[id].startTimestamp != 0, "wave is not started");
-        require(_waves[id].closeTimestamp == 0, "wave is already closed");
+        require(_waves[id].startTimestamp != 0, Errors.WAVE_IS_NOT_STARTED);
+        require(_waves[id].closeTimestamp == 0, Errors.WAVE_IS_ALREADY_CLOSED);
         require(
             winners.length == _waves[id].winnersNumber,
-            "number of winners is incorrect"
+            Errors.NUMBER_OF_WINNERS_IS_INCORRECT
         );
         // Close wave
         DataTypes.ContestWave storage wave = _waves[id];
@@ -59,7 +60,7 @@ contract Contest is IContest, OwnableUpgradeable {
         uint winningValue = address(this).balance / wave.winnersNumber;
         for (uint i = 0; i < winners.length; i++) {
             (bool sent, ) = winners[i].call{value: winningValue}("");
-            require(sent, "failed to send winning");
+            require(sent, Errors.FAILED_TO_SEND_WINNING);
         }
     }
 

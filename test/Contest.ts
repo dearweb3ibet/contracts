@@ -36,7 +36,7 @@ describe("Contest", function () {
       contestContract
         .connect(accounts[0])
         .startWave(contestWaveEndTimestamp, contestWaveWinnersNumber)
-    ).to.be.revertedWith("last wave is not closed");
+    ).to.be.revertedWith("Last wave is not closed");
     // Send ethers to contest contract
     await expect(
       accounts[0].sendTransaction({
@@ -86,6 +86,6 @@ describe("Contest", function () {
           await accounts[2].getAddress(),
           await accounts[3].getAddress(),
         ])
-    ).to.be.revertedWith("wave is already closed");
+    ).to.be.revertedWith("Wave is already closed");
   });
 });

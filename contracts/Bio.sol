@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./libraries/Events.sol";
+import "./libraries/Errors.sol";
 
 /**
  * Contract that stores links to account biographies.
@@ -70,6 +71,6 @@ contract Bio is ERC721URIStorageUpgradeable {
     ) internal virtual override(ERC721Upgradeable) {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
         // Disable transfers except minting
-        require(from == address(0), "Token is non-transferable");
+        require(from == address(0), Errors.TOKEN_IS_NON_TRANSFERABLE);
     }
 }

@@ -8,6 +8,7 @@ import "./interfaces/IBetChecker.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
+import "./libraries/Errors.sol";
 
 /**
  * Contract for create, close and participate in bets.
@@ -56,7 +57,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         uint participationDeadlineTimestamp
     ) public payable returns (uint256) {
         // Checks
-        require(msg.value == fee, "message value is not equal to fee");
+        require(msg.value == fee, Errors.MESSAGE_VALUE_IS_INCORRECT);
         // Update counter
         _counter.increment();
         // Mint token
@@ -100,8 +101,8 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         bool isFeeForSuccess
     ) public payable {
         // Checks
-        require(_exists(tokenId), "token is not exists");
-        require(msg.value == fee, "message value is not equal to fee");
+        require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
+        require(msg.value == fee, Errors.MESSAGE_VALUE_IS_INCORRECT);
         // Add participant
         DataTypes.BetParticipant memory tokenParticipant = DataTypes
             .BetParticipant(
@@ -128,7 +129,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     // TODO: Test function if bet hasn't winners
     function close(uint256 tokenId) public {
         // Checks
-        require(_exists(tokenId), "token is not exists");
+        require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
         // Define whether a bet is successful or not
         DataTypes.BetParams storage tokenParams = _params[tokenId];
         (bool isBetSuccessful, , ) = IBetChecker(_betCheckerAddress)
@@ -168,10 +169,10 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         // Send fee to contest contract
         bool sent;
         (sent, ) = _contestAddress.call{value: feeForContest}("");
-        require(sent, "failed to send fee to contest");
+        require(sent, Errors.FAILED_TO_SEND_FEE_TO_CONTEST);
         // Send fee to usage contract
         (sent, ) = _usageAddress.call{value: feeForUsage}("");
-        require(sent, "failed to send fee to usage");
+        require(sent, Errors.FAILED_TO_SEND_FEE_TO_USAGE);
         // Send fee and winning to winners
         uint winnersNumber;
         for (uint i = 0; i < _participants[tokenId].length; i++) {
@@ -202,7 +203,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
                 (sent, ) = participant.accountAddress.call{
                     value: (participant.fee + winning)
                 }("");
-                require(sent, "failed to send fee and winning to winners");
+                require(sent, Errors.FAILED_TO_SEND_FEE_AND_WINNING_TO_WINNERS);
                 // Increase number of winners
                 winnersNumber++;
             }
