@@ -9,6 +9,7 @@ import "./libraries/Errors.sol";
 
 /**
  * TODO: Add docs
+ * TODO: Make contract upgradeable and add initializer
  */
 contract BetChecker is IBetChecker, Ownable {
     mapping(string => address) internal _feedAddresses;
