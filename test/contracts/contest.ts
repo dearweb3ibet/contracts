@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { BigNumber, Signer } from "ethers";
 import { ethers } from "hardhat";
-import { Contest, Contest__factory } from "../typechain-types";
+import { Contest, Contest__factory } from "../../typechain-types";
 
 describe("Contest", function () {
   // Constants

@@ -14,7 +14,7 @@ import {
   userThreeAddress,
   userTwo,
   userTwoAddress,
-} from "./setup";
+} from "../setup";
 
 describe("Bet", function () {
   it("User should fail to create a bet without message value", async function () {

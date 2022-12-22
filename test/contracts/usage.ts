@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { BigNumber, Signer } from "ethers";
 import { ethers } from "hardhat";
-import { Usage, Usage__factory } from "../typechain-types";
+import { Usage, Usage__factory } from "../../typechain-types";
 
 describe("Usage", function () {
   // Constants

@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { BigNumber, Signer } from "ethers";
 import { ethers } from "hardhat";
-import { Bio, Bio__factory } from "../typechain-types";
+import { Bio, Bio__factory } from "../../typechain-types";
 
 describe("Bio", function () {
   // Accounts

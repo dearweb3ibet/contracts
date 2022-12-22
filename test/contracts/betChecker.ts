@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
-import { BetChecker, BetChecker__factory } from "../typechain-types";
+import { BetChecker, BetChecker__factory } from "../../typechain-types";
 
 describe("BetChecker", function () {
   // Constants
