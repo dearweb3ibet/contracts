@@ -3,6 +3,8 @@ import { BigNumber, Signer } from "ethers";
 import { ethers } from "hardhat";
 import {
   Bet,
+  BetChecker,
+  BetChecker__factory,
   Bet__factory,
   Contest,
   Contest__factory,
@@ -15,8 +17,11 @@ import {
 } from "../typechain-types";
 
 export const betCheckerContractParams = {
-  feedSymbol: ["ETHUSD"],
-  feedAddresses: ["0x0715A7794a1dc8e42615F059dD6e406A6594651A"],
+  feedSymbolEthUsd: "ETHUSD",
+  feedSymbolBtcUsd: "BTCUSD",
+  feedAddressEthUsd: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
+  feedAddressBtcUsdOne: "0x12162c3E810393dEC01362aBf156D7ecf6159528",
+  feedAddressBtcUsdTwo: "0x007A22900a3B98143368Bd5906f8E17e9867581b",
 };
 export const betContractParams = {
   usageFeePercent: 10,
@@ -60,6 +65,7 @@ export let hubContract: Hub;
 export let contestContract: Contest;
 export let usageContract: Usage;
 export let betContract: Bet;
+export let betCheckerContract: BetChecker;
 export let mockBetCheckerContract: MockBetChecker;
 
 before(async function () {
@@ -92,10 +98,12 @@ before(async function () {
     betContractParams.usageFeePercent
   );
   // Deploy bet checker contract
+  betCheckerContract = await new BetChecker__factory(deployer).deploy();
+  // Deploy mock bet checker contract
   mockBetCheckerContract = await new MockBetChecker__factory(deployer).deploy();
   mockBetCheckerContract.setFeedAddresses(
-    betCheckerContractParams.feedSymbol,
-    betCheckerContractParams.feedAddresses
+    [betCheckerContractParams.feedSymbolEthUsd],
+    [betCheckerContractParams.feedAddressEthUsd]
   );
   // Deploy contest contract
   contestContract = await new Contest__factory(deployer).deploy();
