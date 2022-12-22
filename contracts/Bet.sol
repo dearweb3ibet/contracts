@@ -287,4 +287,18 @@ contract Bet is
     ) public view returns (DataTypes.BetParticipant[] memory) {
         return _participants[tokenId];
     }
+
+    /**
+     * Hook that is called before any token transfer.
+     */
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 firstTokenId,
+        uint256 batchSize
+    ) internal virtual override(ERC721Upgradeable) {
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+        // Disable transfers except minting
+        require(from == address(0), Errors.TOKEN_IS_NON_TRANSFERABLE);
+    }
 }
