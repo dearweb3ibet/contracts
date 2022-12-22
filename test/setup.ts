@@ -138,8 +138,10 @@ before(async function () {
   await contestContract.initialize();
   // Deploy usage contract
   usageContract = await new Usage__factory(deployer).deploy();
+  await usageContract.initialize();
   // Deploy bio contract
   bioContract = await new Bio__factory(deployer).deploy();
+  await bioContract.initialize();
 
   // Set hub addresses
   await expect(

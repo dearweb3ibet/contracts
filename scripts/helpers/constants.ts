@@ -13,7 +13,7 @@ export const deployedContracts: {
       impl: string;
     };
     contest: { name: string; proxy: string; proxyAdmin: string; impl: string };
-    usage: { name: string; impl: string };
+    usage: { name: string; proxy: string; proxyAdmin: string; impl: string };
     bet: {
       name: string;
       proxy: string;
@@ -49,7 +49,9 @@ export const deployedContracts: {
     },
     usage: {
       name: "Usage",
-      impl: "0xc7e9b82765E5edf192D702e11B108cac6D51D186",
+      proxy: "",
+      proxyAdmin: "",
+      impl: "",
     },
     bet: {
       name: "Bet",

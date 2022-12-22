@@ -8,11 +8,7 @@ import {
   Usage__factory,
 } from "../typechain-types";
 import { deployedContracts, deployedContractsData } from "./helpers/constants";
-import {
-  deployProxyWithLogs,
-  deployWithLogs,
-  upgradeProxyWithLogs,
-} from "./helpers/utils";
+import { deployProxyWithLogs, upgradeProxyWithLogs } from "./helpers/utils";
 
 async function main() {
   // Define chain
@@ -41,7 +37,7 @@ async function main() {
         chainContracts.bet.proxy || ethers.constants.AddressZero,
         chainContracts.betChecker.proxy || ethers.constants.AddressZero,
         chainContracts.contest.proxy || ethers.constants.AddressZero,
-        chainContracts.usage.impl || ethers.constants.AddressZero,
+        chainContracts.usage.proxy || ethers.constants.AddressZero,
         chainContracts.bio.proxy || ethers.constants.AddressZero,
       ]
     );
@@ -113,19 +109,26 @@ async function main() {
     );
   }
 
-  // Deploy usage contract
-  if (chainContracts.usage.impl === "") {
-    const contract = await deployWithLogs(
+  // Deploy or upgrade usage contract
+  if (chainContracts.usage.proxy === "") {
+    const contract = await deployProxyWithLogs(
       chain,
-      chainContracts.usage.impl,
+      chainContracts.usage.name,
       new Usage__factory(deployer)
     );
-    chainContracts.usage.impl = contract.address;
+    chainContracts.usage.proxy = contract.address;
     console.log("⚡ Send contract address to hub");
     await Hub__factory.connect(
       chainContracts.hub.proxy,
       deployer
     ).setUsageAddress(contract.address);
+  } else if (chainContracts.usage.impl === "") {
+    await upgradeProxyWithLogs(
+      chain,
+      chainContracts.usage.name,
+      chainContracts.usage.proxy,
+      new Usage__factory(deployer)
+    );
   }
 
   // Deploy or upgrade bet contract
