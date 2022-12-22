@@ -126,6 +126,7 @@ before(async function () {
   );
   // Deploy bet checker contract
   betCheckerContract = await new BetChecker__factory(deployer).deploy();
+  betCheckerContract.initialize();
   // Deploy mock bet checker contract
   mockBetCheckerContract = await new MockBetChecker__factory(deployer).deploy();
   mockBetCheckerContract.setFeedAddresses(

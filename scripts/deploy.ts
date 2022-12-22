@@ -39,7 +39,7 @@ async function main() {
       new Hub__factory(deployer),
       [
         chainContracts.bet.proxy || ethers.constants.AddressZero,
-        chainContracts.betChecker.impl || ethers.constants.AddressZero,
+        chainContracts.betChecker.proxy || ethers.constants.AddressZero,
         chainContracts.contest.proxy || ethers.constants.AddressZero,
         chainContracts.usage.impl || ethers.constants.AddressZero,
         chainContracts.bio.proxy || ethers.constants.AddressZero,
@@ -64,14 +64,14 @@ async function main() {
     return;
   }
 
-  // Deploy bet checker contract
-  if (chainContracts.betChecker.impl === "") {
-    const contract = await deployWithLogs(
+  // Deploy or upgrade bet checker contract
+  if (chainContracts.betChecker.proxy === "") {
+    const contract = await deployProxyWithLogs(
       chain,
       chainContracts.betChecker.name,
       new BetChecker__factory(deployer)
     );
-    chainContracts.betChecker.impl === contract.address;
+    chainContracts.betChecker.proxy === contract.address;
     console.log("⚡ Set contract feed addresses");
     await contract.setFeedAddresses(
       chainContractsData.betChecker.feedSymbols,
@@ -82,6 +82,13 @@ async function main() {
       chainContracts.hub.proxy,
       deployer
     ).setBetCheckerAddress(contract.address);
+  } else if (chainContracts.betChecker.impl === "") {
+    await upgradeProxyWithLogs(
+      chain,
+      chainContracts.betChecker.name,
+      chainContracts.betChecker.proxy,
+      new BetChecker__factory(deployer)
+    );
   }
 
   // Deploy or upgrade contest contract

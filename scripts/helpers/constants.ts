@@ -6,7 +6,12 @@ export const deployedContracts: {
       proxyAdmin: string;
       impl: string;
     };
-    betChecker: { name: string; impl: string };
+    betChecker: {
+      name: string;
+      proxy: string;
+      proxyAdmin: string;
+      impl: string;
+    };
     contest: { name: string; proxy: string; proxyAdmin: string; impl: string };
     usage: { name: string; impl: string };
     bet: {
@@ -32,7 +37,9 @@ export const deployedContracts: {
     },
     betChecker: {
       name: "Bet Checker",
-      impl: "0x3DbF54192Af966DF64Fb7c06a883Ac5d9f204429",
+      proxy: "",
+      proxyAdmin: "",
+      impl: "",
     },
     contest: {
       name: "Contest",

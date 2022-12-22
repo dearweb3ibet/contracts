@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IBetChecker.sol";
 import "./libraries/Constants.sol";
@@ -9,11 +10,13 @@ import "./libraries/Errors.sol";
 
 /**
  * Contract to check the success of failure of a bet using price feeds from Chainlink.
- *
- * TODO: Make contract upgradeable and add initializer
  */
-contract BetChecker is IBetChecker, Ownable {
+contract BetChecker is IBetChecker, OwnableUpgradeable {
     mapping(string => address) private _feedAddresses;
+
+    function initialize() public initializer {
+        __Ownable_init();
+    }
 
     function setFeedAddresses(
         string[] memory feedSymbols,
