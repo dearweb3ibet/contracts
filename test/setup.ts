@@ -6,6 +6,8 @@ import {
   BetChecker,
   BetChecker__factory,
   Bet__factory,
+  Bio,
+  Bio__factory,
   Contest,
   Contest__factory,
   Hub,
@@ -51,6 +53,11 @@ export const betParticipantFees = {
   eth01: BigNumber.from("100000000000000000"),
 };
 
+export const bioUris = {
+  one: "ipfs://one",
+  two: "ipfs://two",
+};
+
 export let accounts: Array<Signer>;
 export let deployer: Signer;
 export let userOne: Signer;
@@ -67,6 +74,7 @@ export let usageContract: Usage;
 export let betContract: Bet;
 export let betCheckerContract: BetChecker;
 export let mockBetCheckerContract: MockBetChecker;
+export let bioContract: Bio;
 
 before(async function () {
   // Init accounts
@@ -110,6 +118,8 @@ before(async function () {
   await contestContract.initialize();
   // Deploy usage contract
   usageContract = await new Usage__factory(deployer).deploy();
+  // Deploy bio contract
+  bioContract = await new Bio__factory(deployer).deploy();
 
   // Set hub addresses
   await expect(
@@ -123,6 +133,9 @@ before(async function () {
   ).to.be.not.reverted;
   await expect(
     hubContract.setUsageAddress(usageContract.address)
+  ).to.be.not.reverted;
+  await expect(
+    hubContract.setBioAddress(bioContract.address)
   ).to.be.not.reverted;
 
   // Start contest wave
