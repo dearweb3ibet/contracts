@@ -12,7 +12,7 @@ import "./libraries/Errors.sol";
  * TODO: Make contract upgradeable and add initializer
  */
 contract BetChecker is IBetChecker, Ownable {
-    mapping(string => address) internal _feedAddresses;
+    mapping(string => address) private _feedAddresses;
 
     function setFeedAddresses(
         string[] memory feedSymbols,

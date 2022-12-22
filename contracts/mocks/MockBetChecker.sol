@@ -9,7 +9,7 @@ import "../libraries/Errors.sol";
  * TODO: Add docs
  */
 contract MockBetChecker is IBetChecker, Ownable {
-    mapping(string => address) internal _feedAddresses;
+    mapping(string => address) private _feedAddresses;
 
     function setFeedAddresses(
         string[] memory feedSymbols,

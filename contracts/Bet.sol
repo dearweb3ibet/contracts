@@ -18,11 +18,11 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     using Counters for Counters.Counter;
 
     address private _hubAddress;
-    uint _contestFeePercent;
-    uint _usageFeePercent;
+    uint private _contestFeePercent;
+    uint private _usageFeePercent;
     Counters.Counter private _counter;
-    mapping(uint256 => DataTypes.BetParams) internal _params;
-    mapping(uint256 => DataTypes.BetParticipant[]) internal _participants;
+    mapping(uint256 => DataTypes.BetParams) private _params;
+    mapping(uint256 => DataTypes.BetParticipant[]) private _participants;
 
     function initialize(
         address hubAddress,

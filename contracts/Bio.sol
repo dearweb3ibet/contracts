@@ -13,7 +13,7 @@ contract Bio is ERC721URIStorageUpgradeable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _counter;
-    mapping(address => uint256) internal _owners;
+    mapping(address => uint256) private _owners;
 
     function initialize() public initializer {
         __ERC721_init("dearweb3ibet bio", "DW3IBBIO");
@@ -62,7 +62,7 @@ contract Bio is ERC721URIStorageUpgradeable {
     /**
      * Set uri.
      */
-    function _setURI(uint256 tokenId, string memory tokenURI) internal {
+    function _setURI(uint256 tokenId, string memory tokenURI) private {
         _setTokenURI(tokenId, tokenURI);
         emit Events.URISet(tokenId, tokenURI);
     }
