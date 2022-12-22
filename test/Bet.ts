@@ -1,233 +1,208 @@
 import { expect } from "chai";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import {
-  Bet,
-  Bet__factory,
-  Contest,
-  Contest__factory,
-  Hub,
-  Hub__factory,
-  IBetChecker,
-  MockBetChecker__factory,
-  Usage,
-  Usage__factory,
-} from "../typechain-types";
+  betContract,
+  betContractParams,
+  betParams,
+  betParticipantFees,
+  contestContract,
+  usageContract,
+  userOne,
+  userOneAddress,
+  userThree,
+  userThreeAddress,
+  userTwo,
+  userTwoAddress,
+} from "./setup";
 
 describe("Bet", function () {
-  // Constants
-  const feedSymbolEthUsd = "ETHUSD";
-  const feedAddressEthUsd = "0x0715A7794a1dc8e42615F059dD6e406A6594651A";
-  const contestWaveEndTimestamp = 1672099200;
-  const contestWaveWinnersNumber = 0;
-  const contestFeePercent = 15;
-  const usageFeePercent = 10;
-  const betParams = {
-    uri: "",
-    symbol: "ETHUSD",
-    targetMinPrice: BigNumber.from(1000),
-    targetMaxPrice: BigNumber.from(1200),
-    targetTimestamp: BigNumber.from(1667088000),
-    participationDeadlineTimestamp: BigNumber.from(1667088000),
-  };
-  const betParticipants = {
-    creator: {
-      accountIndex: 0,
-      fee: BigNumber.from("50000000000000000"),
-      isFeeForSuccess: true,
-    },
-    second: {
-      accountIndex: 1,
-      fee: BigNumber.from("10000000000000000"),
-      isFeeForSuccess: false,
-    },
-    third: {
-      accountIndex: 2,
-      fee: BigNumber.from("30000000000000000"),
-      isFeeForSuccess: false,
-    },
-    fourth: {
-      accountIndex: 3,
-      fee: BigNumber.from("20000000000000000"),
-      isFeeForSuccess: true,
-    },
-  };
-  const betFeeForSuccess = betParticipants.creator.fee.add(
-    betParticipants.fourth.fee
-  );
-  const betFeeForFailure = betParticipants.second.fee.add(
-    betParticipants.third.fee
-  );
-  // Accounts
-  let accounts: Array<Signer>;
-  let deployer: Signer;
-  // Contracts
-  let hubContract: Hub;
-  let betCheckerContract: IBetChecker;
-  let contestContract: Contest;
-  let usageContract: Usage;
-  let betContract: Bet;
-  // Helpful variables
-  let lastTokenId = 0;
-
-  before(async function () {
-    // Init accounts
-    accounts = await ethers.getSigners();
-    deployer = accounts[0];
-    // Deploy hub contract
-    hubContract = await new Hub__factory(deployer).deploy();
-    await hubContract.initialize(
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero
-    );
-    // Deploy bet checker contract
-    betCheckerContract = await new MockBetChecker__factory(deployer).deploy();
-    betCheckerContract.setFeedAddresses(
-      [feedSymbolEthUsd],
-      [feedAddressEthUsd]
-    );
-    await hubContract.setBetCheckerAddress(betCheckerContract.address);
-    // Deploy contest contract
-    contestContract = await new Contest__factory(deployer).deploy();
-    await contestContract.initialize();
-    await contestContract.startWave(
-      contestWaveEndTimestamp,
-      contestWaveWinnersNumber
-    );
-    await hubContract.setContestAddress(contestContract.address);
-    // Deploy usage contract
-    usageContract = await new Usage__factory(deployer).deploy();
-    await hubContract.setUsageAddress(usageContract.address);
-    // Deploy bet contract
-    betContract = await new Bet__factory(deployer).deploy();
-    await betContract.initialize(
-      hubContract.address,
-      contestFeePercent,
-      usageFeePercent
-    );
-    await hubContract.setBetAddress(betContract.address);
-  });
-
-  it("Should create bet", async function () {
-    // Create bet
+  it("User should fail to create a bet without message value", async function () {
     await expect(
       betContract
-        .connect(accounts[betParticipants.creator.accountIndex])
+        .connect(userOne)
         .create(
-          betParams.uri,
-          betParticipants.creator.fee,
-          betParams.symbol,
-          betParams.targetMinPrice,
-          betParams.targetMaxPrice,
-          betParams.targetTimestamp,
-          betParams.participationDeadlineTimestamp,
-          {
-            value: betParticipants.creator.fee,
-          }
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp
         )
-    ).to.changeEtherBalances(
-      [accounts[betParticipants.creator.accountIndex], betContract.address],
+    ).to.be.revertedWith("Message value is incorrect");
+  });
+
+  it("User should be able to create a bet", async function () {
+    // Create bet
+    const tx = betContract
+      .connect(userOne)
+      .create(
+        betParams.one.uri,
+        betParticipantFees.eth005,
+        betParams.one.symbol,
+        betParams.one.targetMinPrice,
+        betParams.one.targetMaxPrice,
+        betParams.one.targetTimestamp,
+        betParams.one.participationDeadlineTimestamp,
+        {
+          value: betParticipantFees.eth005,
+        }
+      );
+    await expect(tx).to.be.not.reverted;
+    await expect(tx).to.changeEtherBalances(
+      [userOne, betContract.address],
       [
-        betParticipants.creator.fee.mul(ethers.constants.NegativeOne),
-        betParticipants.creator.fee,
+        betParticipantFees.eth005.mul(ethers.constants.NegativeOne),
+        betParticipantFees.eth005,
       ]
     );
-    lastTokenId += 1;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
     // Check bet params
-    const params = await betContract.getParams(lastTokenId);
-    expect(params.creatorAddress).to.equal(
-      await accounts[betParticipants.creator.accountIndex].getAddress()
-    );
-    expect(params.creatorFee).to.equal(betParticipants.creator.fee);
-    expect(params.symbol).to.equal(betParams.symbol);
-    expect(params.targetMinPrice).to.equal(betParams.targetMinPrice);
-    expect(params.targetMaxPrice).to.equal(betParams.targetMaxPrice);
-    expect(params.targetTimestamp).to.equal(betParams.targetTimestamp);
+    const params = await betContract.getParams(createdBetId);
+    expect(params.creatorAddress).to.equal(userOneAddress);
+    expect(params.creatorFee).to.equal(betParticipantFees.eth005);
+    expect(params.symbol).to.equal(betParams.one.symbol);
+    expect(params.targetMinPrice).to.equal(betParams.one.targetMinPrice);
+    expect(params.targetMaxPrice).to.equal(betParams.one.targetMaxPrice);
+    expect(params.targetTimestamp).to.equal(betParams.one.targetTimestamp);
     // Check bet participants
-    const participants = await betContract.getParticipants(lastTokenId);
+    const participants = await betContract.getParticipants(createdBetId);
     const firstParticipant = participants[0];
     expect(participants.length).to.equal(1);
-    expect(firstParticipant.accountAddress).to.equal(
-      await accounts[betParticipants.creator.accountIndex].getAddress()
-    );
-    expect(firstParticipant.fee).to.equal(betParticipants.creator.fee);
+    expect(firstParticipant.accountAddress).to.equal(userOneAddress);
+    expect(firstParticipant.fee).to.equal(betParticipantFees.eth005);
     expect(firstParticipant.isFeeForSuccess).to.equal(true);
   });
 
-  it("Should add participants", async function () {
-    // Define data
-    const extraParticipants = [
-      betParticipants.second,
-      betParticipants.third,
-      betParticipants.fourth,
-    ];
-    // Add participants
-    for (const participant of extraParticipants) {
-      await expect(
-        betContract
-          .connect(accounts[participant.accountIndex])
-          .takePart(lastTokenId, participant.fee, participant.isFeeForSuccess, {
-            value: participant.fee,
-          })
-      ).to.changeEtherBalance(
-        accounts[participant.accountIndex],
-        participant.fee.mul(ethers.constants.NegativeOne)
-      );
-    }
+  it("User should be able to take part in a bet", async function () {
+    // Define fees
+    const userOneFee = betParticipantFees.eth005;
+    const userTwoFee = betParticipantFees.eth01;
+    const userThreeFee = betParticipantFees.eth003;
+    // Create bet by user one
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          userOneFee,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: userOneFee,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Take part in bet by user two
+    const txOne = betContract
+      .connect(userTwo)
+      .takePart(createdBetId, userTwoFee, false, {
+        value: userTwoFee,
+      });
+    await expect(txOne).to.be.not.reverted;
+    await expect(txOne).to.changeEtherBalance(
+      userTwo,
+      userTwoFee.mul(ethers.constants.NegativeOne)
+    );
+    // Take part in bet by user three
+    const txTwo = betContract
+      .connect(userThree)
+      .takePart(createdBetId, userThreeFee, true, {
+        value: userThreeFee,
+      });
+    await expect(txTwo).to.be.not.reverted;
+    await expect(txTwo).to.changeEtherBalance(
+      userThree,
+      userThreeFee.mul(ethers.constants.NegativeOne)
+    );
     // Check bet params
-    const params = await betContract.getParams(lastTokenId);
-    expect(params.feeForSuccess).to.equal(betFeeForSuccess);
-    expect(params.feeForFailure).to.equal(betFeeForFailure);
+    const params = await betContract.getParams(createdBetId);
+    expect(params.feeForSuccess).to.equal(userOneFee.add(userThreeFee));
+    expect(params.feeForFailure).to.equal(userTwoFee);
     // Check bet participants
-    const participants = await betContract.getParticipants(lastTokenId);
-    expect(participants.length).to.equal(Object.values(betParticipants).length);
-    // Check first extra participant
-    expect(participants[1].accountAddress).to.equal(
-      await accounts[extraParticipants[0].accountIndex].getAddress()
-    );
-    expect(participants[1].fee).to.equal(extraParticipants[0].fee);
-    expect(participants[1].isFeeForSuccess).to.equal(
-      extraParticipants[0].isFeeForSuccess
-    );
+    const participants = await betContract.getParticipants(createdBetId);
+    expect(participants.length).to.equal(3);
   });
 
-  it("Should close bet", async function () {
-    // Define data
-    const feeForContest = betFeeForSuccess
-      .mul(contestFeePercent)
+  it("User should be able to close a bet and participants should receive contest points", async function () {
+    // Define fees and distributions
+    const userOneFee = betParticipantFees.eth005;
+    const userTwoFee = betParticipantFees.eth01;
+    const userThreeFee = betParticipantFees.eth003;
+    const feeForSuccess = userOneFee;
+    const feeForFailure = userTwoFee.add(userThreeFee);
+    const feeForContest = feeForSuccess
+      .mul(betContractParams.contestFeePercent)
       .div(BigNumber.from(100));
-    const feeForUsage = betFeeForSuccess
-      .mul(usageFeePercent)
+    const feeForUsage = feeForSuccess
+      .mul(betContractParams.usageFeePercent)
       .div(BigNumber.from(100));
-    const feeForWinners = betFeeForSuccess.sub(feeForContest).sub(feeForUsage);
-    const account2Winning = betParticipants.second.fee
-      .mul(feeForWinners)
-      .div(betFeeForFailure);
-    const account3Winning = betParticipants.third.fee
-      .mul(feeForWinners)
-      .div(betFeeForFailure);
-    const contractBalance = betParticipants.creator.fee
-      .add(betParticipants.second.fee)
-      .add(betParticipants.third.fee)
-      .add(betParticipants.fourth.fee);
-    // Close bet and check balances
+    const feeForWinners = feeForSuccess.sub(feeForContest).sub(feeForUsage);
+    const userTwoWinning = userTwoFee.mul(feeForWinners).div(feeForFailure);
+    const userThreeWinning = userThreeFee.mul(feeForWinners).div(feeForFailure);
+    // Create bet by user one
     await expect(
-      betContract.connect(accounts[0]).close(lastTokenId)
-    ).to.changeEtherBalances(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          userOneFee,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: userOneFee,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Take part in bet by user two
+    await expect(
+      betContract.connect(userTwo).takePart(createdBetId, userTwoFee, false, {
+        value: userTwoFee,
+      })
+    ).to.be.not.reverted;
+    // Take part in bet by user three
+    await expect(
+      betContract
+        .connect(userThree)
+        .takePart(createdBetId, userThreeFee, false, {
+          value: userThreeFee,
+        })
+    ).to.be.not.reverted;
+    // Close bet
+    const tx = betContract.connect(userOne).close(createdBetId);
+    await expect(tx).to.be.not.reverted;
+    await expect(tx).to.changeEtherBalances(
       [
-        accounts[betParticipants.second.accountIndex],
-        accounts[betParticipants.third.accountIndex],
+        userOne,
+        userTwo,
+        userThree,
         betContract.address,
         contestContract.address,
         usageContract.address,
       ],
       [
-        betParticipants.second.fee.add(account2Winning),
-        betParticipants.third.fee.add(account3Winning),
-        contractBalance.mul(ethers.constants.NegativeOne),
+        ethers.constants.Zero,
+        userTwoFee.add(userTwoWinning),
+        userThreeFee.add(userThreeWinning),
+        userTwoFee
+          .add(userTwoWinning)
+          .add(userThreeFee)
+          .add(userThreeWinning)
+          .add(feeForContest)
+          .add(feeForUsage)
+          .mul(ethers.constants.NegativeOne),
         feeForContest,
         feeForUsage,
       ]
@@ -237,31 +212,22 @@ describe("Bet", function () {
     const contestParticipants = await contestContract.getWaveParticipants(
       contestLastWaveId
     );
-    // Check bet creator
-    expect(contestParticipants[0].accountAddress).to.equal(
-      await accounts[betParticipants.creator.accountIndex].getAddress()
-    );
-    expect(contestParticipants[0].successes).to.equal(
-      betParticipants.creator.isFeeForSuccess ? 0 : 1
-    );
-    expect(contestParticipants[0].failures).to.equal(
-      betParticipants.creator.isFeeForSuccess ? 1 : 0
-    );
-    expect(contestParticipants[0].variance).to.equal(
-      betParticipants.creator.isFeeForSuccess ? -1 : 0
-    );
-    // Check second account
-    expect(contestParticipants[1].accountAddress).to.equal(
-      await accounts[betParticipants.second.accountIndex].getAddress()
-    );
-    expect(contestParticipants[1].successes).to.equal(
-      betParticipants.second.isFeeForSuccess ? 0 : 1
-    );
-    expect(contestParticipants[1].failures).to.equal(
-      betParticipants.second.isFeeForSuccess ? 1 : 0
-    );
-    expect(contestParticipants[1].variance).to.equal(
-      betParticipants.second.isFeeForSuccess ? -1 : 1
-    );
+    for (let contestParticipant of contestParticipants) {
+      if (contestParticipant.accountAddress === userOneAddress) {
+        expect(contestParticipant.successes).be.eq(BigNumber.from(0));
+        expect(contestParticipant.failures).be.eq(BigNumber.from(1));
+        expect(contestParticipant.variance).to.be.eq(BigNumber.from(-1));
+      }
+      if (contestParticipant.accountAddress === userTwoAddress) {
+        expect(contestParticipant.successes).be.eq(BigNumber.from(1));
+        expect(contestParticipant.failures).be.eq(BigNumber.from(0));
+        expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
+      }
+      if (contestParticipant.accountAddress === userThreeAddress) {
+        expect(contestParticipant.successes).be.eq(BigNumber.from(1));
+        expect(contestParticipant.failures).be.eq(BigNumber.from(0));
+        expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
+      }
+    }
   });
 });
