@@ -20,6 +20,13 @@ contract Bio is ERC721URIStorageUpgradeable {
     }
 
     /**
+     * Get token id by owner.
+     */
+    function getTokenId(address owner) external view returns (uint) {
+        return _owners[owner];
+    }
+
+    /**
      * Get uri by owner.
      */
     function getURI(address owner) external view returns (string memory) {
