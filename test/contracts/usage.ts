@@ -1,43 +1,28 @@
 import { expect } from "chai";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { Usage, Usage__factory } from "../../typechain-types";
+import { deployer, deployerAddress, usageContract, userOne } from "../setup";
 
 describe("Usage", function () {
-  // Constants
-  const usageBalance = BigNumber.from("500000000000000000");
-  // Accounts
-  let accounts: Array<Signer>;
-  // Contracts
-  let usageContract: Usage;
-
-  before(async function () {
-    // Init accounts
-    accounts = await ethers.getSigners();
-    // Init contracts
-    usageContract = await new Usage__factory(accounts[0]).deploy();
+  it("User should fail withdraw ethers", async function () {
+    await expect(usageContract.connect(userOne).withdraw()).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
   });
 
-  it("Should send and withdraw tokens", async function () {
-    // Send tokens
+  it("Deployer should withdraw ethers", async function () {
+    // Define balance
+    const usageBalance = BigNumber.from("500000000000000000");
+    // Send ethers to contract
+    await deployer.sendTransaction({
+      to: usageContract.address,
+      value: usageBalance,
+    });
+    // Withdraw
     await expect(
-      accounts[0].sendTransaction({
-        to: usageContract.address,
-        value: usageBalance,
-      })
+      usageContract.connect(deployer).withdraw()
     ).to.changeEtherBalances(
-      [accounts[0], usageContract.address],
-      [usageBalance.mul(ethers.constants.NegativeOne), usageBalance]
-    );
-    // Withdraw tokens by not owner
-    await expect(
-      usageContract.connect(accounts[1]).withdraw()
-    ).to.be.revertedWith("Ownable: caller is not the owner");
-    // Withdraw tokens by owner
-    await expect(
-      usageContract.connect(accounts[0]).withdraw()
-    ).to.changeEtherBalances(
-      [accounts[0], usageContract.address],
+      [deployerAddress, usageContract.address],
       [usageBalance, usageBalance.mul(ethers.constants.NegativeOne)]
     );
   });

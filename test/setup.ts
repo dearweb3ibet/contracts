@@ -68,6 +68,7 @@ export let userOne: Signer;
 export let userTwo: Signer;
 export let userThree: Signer;
 
+export let deployerAddress: string;
 export let userOneAddress: string;
 export let userTwoAddress: string;
 export let userThreeAddress: string;
@@ -89,6 +90,7 @@ before(async function () {
   userThree = accounts[3];
 
   // Init addresses
+  deployerAddress = await deployer.getAddress();
   userOneAddress = await userOne.getAddress();
   userTwoAddress = await userTwo.getAddress();
   userThreeAddress = await userThree.getAddress();

@@ -6,6 +6,7 @@ import "./libraries/Events.sol";
 
 /**
  * TODO: Add docs
+ * TODO: Make contract upgradeable and add initializer
  */
 contract Usage is Ownable {
     receive() external payable {
