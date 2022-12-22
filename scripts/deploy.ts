@@ -42,7 +42,13 @@ async function main() {
       ]
     );
     chainContracts.hub.proxy = contract.address;
-    // TODO: Send hub address to bet contract if it exists
+    if (chainContracts.bet.proxy !== "") {
+      console.log("⚡ Send hub address to bet contract");
+      await Bet__factory.connect(
+        chainContracts.bet.proxy,
+        deployer
+      ).setHubAddress(chainContracts.hub.proxy);
+    }
   } else if (chainContracts.hub.impl === "") {
     await upgradeProxyWithLogs(
       chain,
@@ -69,7 +75,10 @@ async function main() {
     );
     chainContracts.betChecker.proxy === contract.address;
     console.log("⚡ Set contract feed addresses");
-    await contract.setFeedAddresses(
+    await BetChecker__factory.connect(
+      chainContracts.betChecker.proxy,
+      deployer
+    ).setFeedAddresses(
       chainContractsData.betChecker.feedSymbols,
       chainContractsData.betChecker.feedAddresses
     );
