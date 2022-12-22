@@ -4,9 +4,10 @@ import {
   betCheckerContract,
   betCheckerContractParams,
   deployer,
+  makeSuiteCleanRoom,
 } from "../setup";
 
-describe("BetChecker", function () {
+makeSuiteCleanRoom("BetChecker", function () {
   it("Deployer should set and update feed address", async function () {
     // Check address before
     expect(

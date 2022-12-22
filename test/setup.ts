@@ -17,6 +17,7 @@ import {
   Usage,
   Usage__factory,
 } from "../typechain-types";
+import { revertToSnapshot, takeSnapshot } from "./helpers/utils";
 
 export const betCheckerContractParams = {
   feedSymbolEthUsd: "ETHUSD",
@@ -80,6 +81,18 @@ export let betContract: Bet;
 export let betCheckerContract: BetChecker;
 export let mockBetCheckerContract: MockBetChecker;
 export let bioContract: Bio;
+
+export function makeSuiteCleanRoom(name: string, tests: () => void) {
+  return describe(name, () => {
+    beforeEach(async function () {
+      await takeSnapshot();
+    });
+    tests();
+    afterEach(async function () {
+      await revertToSnapshot();
+    });
+  });
+}
 
 before(async function () {
   // Init accounts

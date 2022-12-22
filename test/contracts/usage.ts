@@ -1,9 +1,15 @@
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { deployer, deployerAddress, usageContract, userOne } from "../setup";
+import {
+  deployer,
+  deployerAddress,
+  makeSuiteCleanRoom,
+  usageContract,
+  userOne,
+} from "../setup";
 
-describe("Usage", function () {
+makeSuiteCleanRoom("Usage", function () {
   it("User should fail withdraw ethers", async function () {
     await expect(usageContract.connect(userOne).withdraw()).to.be.revertedWith(
       "Ownable: caller is not the owner"

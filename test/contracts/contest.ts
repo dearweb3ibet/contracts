@@ -5,28 +5,31 @@ import {
   contestContract,
   contestWaveParams,
   deployer,
+  makeSuiteCleanRoom,
   userOneAddress,
   userThreeAddress,
   userTwoAddress,
 } from "../setup";
 
-describe("Contest", function () {
-  it("Deployer should be able to close last wave and fail to close last wave again", async function () {
+makeSuiteCleanRoom("Contest", function () {
+  beforeEach(async function () {
+    // Close last wave
+    const lastWaveId = await contestContract.getCurrentCounter();
+    await contestContract
+      .connect(deployer)
+      .closeWave(lastWaveId, [
+        userOneAddress,
+        userTwoAddress,
+        userThreeAddress,
+      ]);
+  });
+
+  it("Deployer should fail close already closed last wave", async function () {
     // Check last wave
     const lastWaveId = await contestContract.getCurrentCounter();
-    let wave = await contestContract.getWave(lastWaveId);
-    expect(wave.closeTimestamp).to.be.eq(ethers.constants.Zero);
-    // Close wave (first try)
-    await expect(
-      contestContract
-        .connect(deployer)
-        .closeWave(lastWaveId, [
-          userOneAddress,
-          userTwoAddress,
-          userThreeAddress,
-        ])
-    ).to.be.not.reverted;
-    // Close wave (second try)
+    const wave = await contestContract.getWave(lastWaveId);
+    expect(wave.closeTimestamp).to.be.not.eq(ethers.constants.Zero);
+    // Close wave
     await expect(
       contestContract
         .connect(deployer)
@@ -36,17 +39,10 @@ describe("Contest", function () {
           userThreeAddress,
         ])
     ).to.be.revertedWith("Wave is already closed");
-    // Check last wave
-    const waveAfter = await contestContract.getWave(lastWaveId);
-    expect(waveAfter.closeTimestamp).to.be.not.eq(ethers.constants.Zero);
   });
 
-  it("Deployer should be able to start and close wave and winners should receive winnings", async function () {
-    // Check last wave
-    let lastWaveId = await contestContract.getCurrentCounter();
-    const wave = await contestContract.getWave(lastWaveId);
-    expect(wave.closeTimestamp).to.be.not.eq(ethers.constants.Zero);
-    // Start wave (first try)
+  it("Deployer should be able to start wave and fail to start wave again", async function () {
+    // First try to start wave
     await expect(
       contestContract
         .connect(deployer)
@@ -55,7 +51,7 @@ describe("Contest", function () {
           contestWaveParams.two.winnersNumber
         )
     ).to.be.not.reverted;
-    // Start wave (second try)
+    // Second try to start wave
     await expect(
       contestContract
         .connect(deployer)
@@ -64,8 +60,20 @@ describe("Contest", function () {
           contestWaveParams.two.winnersNumber
         )
     ).to.be.revertedWith("Last wave is not closed");
-    // Update last wave id
-    lastWaveId = await contestContract.getCurrentCounter();
+  });
+
+  it("Deployer should be able to start and close wave and winners should receive winnings", async function () {
+    // Start wave
+    await expect(
+      contestContract
+        .connect(deployer)
+        .startWave(
+          contestWaveParams.two.endTimestamp,
+          contestWaveParams.two.winnersNumber
+        )
+    ).to.be.not.reverted;
+    // Define last wave id
+    const lastWaveId = await contestContract.getCurrentCounter();
     // Define contest distibution
     const contestBalance = BigNumber.from("100000000000000000");
     const contestWinningValue = contestBalance.div(

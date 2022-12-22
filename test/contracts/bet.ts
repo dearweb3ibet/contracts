@@ -7,6 +7,7 @@ import {
   betParams,
   betParticipantFees,
   contestContract,
+  makeSuiteCleanRoom,
   usageContract,
   userOne,
   userOneAddress,
@@ -16,7 +17,7 @@ import {
   userTwoAddress,
 } from "../setup";
 
-describe("Bet", function () {
+makeSuiteCleanRoom("Bet", function () {
   it("User should fail to create a bet without message value", async function () {
     await expect(
       betContract
