@@ -7,6 +7,7 @@ import {
   betParams,
   betParticipantFees,
   contestContract,
+  deployer,
   makeSuiteCleanRoom,
   usageContract,
   userOne,
@@ -230,5 +231,29 @@ makeSuiteCleanRoom("Bet", function () {
         expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
       }
     }
+  });
+
+  it("User should fail to create a bet if contract is paused", async function () {
+    // Pause contract
+    expect(await betContract.paused()).to.be.eq(false);
+    await expect(betContract.connect(deployer).pause()).to.be.not.reverted;
+    expect(await betContract.paused()).to.be.eq(true);
+    // Create bet
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.revertedWith("Pausable: paused");
   });
 });

@@ -2,8 +2,9 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interfaces/IBetChecker.sol";
 import "./interfaces/IHub.sol";
 import "./interfaces/IContest.sol";
@@ -14,7 +15,11 @@ import "./libraries/Errors.sol";
 /**
  * Contract for create, close and participate in bets.
  */
-contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
+contract Bet is
+    ERC721URIStorageUpgradeable,
+    OwnableUpgradeable,
+    PausableUpgradeable
+{
     using Counters for Counters.Counter;
 
     address private _hubAddress;
@@ -31,6 +36,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     ) public initializer {
         __ERC721_init("dearweb3ibet bet", "DW3IBBET");
         __Ownable_init();
+        __Pausable_init();
         _hubAddress = hubAddress;
         _contestFeePercent = contestFeePercent;
         _usageFeePercent = usageFeePercent;
@@ -52,6 +58,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         uint participationDeadlineTimestamp
     ) public payable returns (uint256) {
         // Checks
+        _requireNotPaused();
         require(msg.value == fee, Errors.MESSAGE_VALUE_IS_INCORRECT);
         // Update counter
         _counter.increment();
@@ -97,6 +104,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
         bool isFeeForSuccess
     ) public payable {
         // Checks
+        _requireNotPaused();
         require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
         require(msg.value == fee, Errors.MESSAGE_VALUE_IS_INCORRECT);
         // Add participant
@@ -125,6 +133,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     // TODO: Test function if bet hasn't winners
     function close(uint256 tokenId) public {
         // Checks
+        _requireNotPaused();
         require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
         // Load token params
         DataTypes.BetParams storage tokenParams = _params[tokenId];
@@ -229,6 +238,14 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
             participantAddresses,
             participantWinnings
         );
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function uppause() public onlyOwner {
+        _unpause();
     }
 
     function getCurrentCounter() public view returns (uint) {
