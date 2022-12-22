@@ -9,7 +9,7 @@ import "./libraries/Events.sol";
 import "./libraries/Errors.sol";
 
 /**
- * TODO: Add docs
+ * Contract to recieve funds from the bet contract and send it to winners.
  */
 contract Contest is IContest, OwnableUpgradeable {
     using Counters for Counters.Counter;

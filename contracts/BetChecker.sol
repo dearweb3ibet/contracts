@@ -8,7 +8,8 @@ import "./libraries/Constants.sol";
 import "./libraries/Errors.sol";
 
 /**
- * TODO: Add docs
+ * Contract to check the success of failure of a bet using price feeds from Chainlink.
+ *
  * TODO: Make contract upgradeable and add initializer
  */
 contract BetChecker is IBetChecker, Ownable {

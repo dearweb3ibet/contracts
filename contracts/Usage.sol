@@ -5,7 +5,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./libraries/Events.sol";
 
 /**
- * TODO: Add docs
+ * Contract to receive usage fee from the bet contract.
+ *
  * TODO: Make contract upgradeable and add initializer
  */
 contract Usage is Ownable {

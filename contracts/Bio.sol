@@ -7,7 +7,7 @@ import "./libraries/Events.sol";
 import "./libraries/Errors.sol";
 
 /**
- * Contract that stores links to account biographies.
+ * Contract to stores links to account biographies.
  */
 contract Bio is ERC721URIStorageUpgradeable {
     using Counters for Counters.Counter;

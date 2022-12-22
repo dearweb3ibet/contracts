@@ -13,7 +13,7 @@ import "./libraries/Events.sol";
 import "./libraries/Errors.sol";
 
 /**
- * Contract for create, close and participate in bets.
+ * Contract to create, close and participate in bets.
  */
 contract Bet is
     ERC721URIStorageUpgradeable,

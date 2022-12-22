@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IHub.sol";
 
 /**
- * Contract that stores addresses of other contracts.
+ * Contract to store addresses of other contracts.
  */
 contract Hub is IHub, OwnableUpgradeable {
     address private _betAddress;
