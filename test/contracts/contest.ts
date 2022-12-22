@@ -1,91 +1,95 @@
 import { expect } from "chai";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { Contest, Contest__factory } from "../../typechain-types";
+import {
+  contestContract,
+  contestWaveParams,
+  deployer,
+  userOneAddress,
+  userThreeAddress,
+  userTwoAddress,
+} from "../setup";
 
 describe("Contest", function () {
-  // Constants
-  const contestBalance = BigNumber.from("100000000000000000");
-  const contestWaveEndTimestamp = 1673049600;
-  const contestWaveWinnersNumber = 3;
-  const contestWinningValue = contestBalance.div(
-    BigNumber.from(contestWaveWinnersNumber)
-  );
-  // Accounts
-  let accounts: Array<Signer>;
-  // Contracts
-  let contestContract: Contest;
-
-  before(async function () {
-    // Init accounts
-    accounts = await ethers.getSigners();
-    // Init contracts
-    contestContract = await new Contest__factory(accounts[0]).deploy();
-    await contestContract.initialize();
-  });
-
-  it("Should start and close wave", async function () {
-    // Start wave
+  it("Deployer should be able to close last wave and fail to close last wave again", async function () {
+    // Check last wave
+    const lastWaveId = await contestContract.getCurrentCounter();
+    let wave = await contestContract.getWave(lastWaveId);
+    expect(wave.closeTimestamp).to.be.eq(ethers.constants.Zero);
+    // Close wave (first try)
     await expect(
       contestContract
-        .connect(accounts[0])
-        .startWave(contestWaveEndTimestamp, contestWaveWinnersNumber)
+        .connect(deployer)
+        .closeWave(lastWaveId, [
+          userOneAddress,
+          userTwoAddress,
+          userThreeAddress,
+        ])
+    ).to.be.not.reverted;
+    // Close wave (second try)
+    await expect(
+      contestContract
+        .connect(deployer)
+        .closeWave(lastWaveId, [
+          userOneAddress,
+          userTwoAddress,
+          userThreeAddress,
+        ])
+    ).to.be.revertedWith("Wave is already closed");
+    // Check last wave
+    const waveAfter = await contestContract.getWave(lastWaveId);
+    expect(waveAfter.closeTimestamp).to.be.not.eq(ethers.constants.Zero);
+  });
+
+  it("Deployer should be able to start and close wave and winners should receive winnings", async function () {
+    // Check last wave
+    let lastWaveId = await contestContract.getCurrentCounter();
+    const wave = await contestContract.getWave(lastWaveId);
+    expect(wave.closeTimestamp).to.be.not.eq(ethers.constants.Zero);
+    // Start wave (first try)
+    await expect(
+      contestContract
+        .connect(deployer)
+        .startWave(
+          contestWaveParams.two.endTimestamp,
+          contestWaveParams.two.winnersNumber
+        )
     ).to.be.not.reverted;
     // Start wave (second try)
     await expect(
       contestContract
-        .connect(accounts[0])
-        .startWave(contestWaveEndTimestamp, contestWaveWinnersNumber)
+        .connect(deployer)
+        .startWave(
+          contestWaveParams.two.endTimestamp,
+          contestWaveParams.two.winnersNumber
+        )
     ).to.be.revertedWith("Last wave is not closed");
-    // Send ethers to contest contract
-    await expect(
-      accounts[0].sendTransaction({
-        to: contestContract.address,
-        value: contestBalance,
-      })
-    ).to.changeEtherBalances(
-      [accounts[0], contestContract.address],
-      [contestBalance.mul(ethers.constants.NegativeOne), contestBalance]
+    // Update last wave id
+    lastWaveId = await contestContract.getCurrentCounter();
+    // Define contest distibution
+    const contestBalance = BigNumber.from("100000000000000000");
+    const contestWinningValue = contestBalance.div(
+      BigNumber.from(contestWaveParams.two.winnersNumber)
     );
-    // Check last wave id
-    const lastWaveId = await contestContract
-      .connect(accounts[0])
-      .getCurrentCounter();
-    expect(lastWaveId).to.equal(BigNumber.from(1));
+    // Send ethers to contest contract
+    await deployer.sendTransaction({
+      to: contestContract.address,
+      value: contestBalance,
+    });
     // Close wave
     await expect(
       contestContract
-        .connect(accounts[0])
-        .closeWave(lastWaveId, [
-          await accounts[1].getAddress(),
-          await accounts[2].getAddress(),
-          await accounts[3].getAddress(),
-        ])
+        .connect(deployer)
+        .closeWave(lastWaveId, [userOneAddress, userTwoAddress])
     ).to.changeEtherBalances(
-      [
-        contestContract.address,
-        await accounts[1].getAddress(),
-        await accounts[2].getAddress(),
-        await accounts[3].getAddress(),
-      ],
+      [contestContract.address, userOneAddress, userTwoAddress],
       [
         contestWinningValue
-          .mul(contestWaveWinnersNumber)
+          .mul(contestWaveParams.two.winnersNumber)
           .mul(ethers.constants.NegativeOne),
-        contestWinningValue,
         contestWinningValue,
         contestWinningValue,
       ]
     );
-    // Close wave (second try)
-    await expect(
-      contestContract
-        .connect(accounts[0])
-        .closeWave(lastWaveId, [
-          await accounts[1].getAddress(),
-          await accounts[2].getAddress(),
-          await accounts[3].getAddress(),
-        ])
-    ).to.be.revertedWith("Wave is already closed");
   });
 });

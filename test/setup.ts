@@ -30,9 +30,13 @@ export const betContractParams = {
   contestFeePercent: 15,
 };
 export const contestWaveParams = {
-  "1": {
+  one: {
     endTimestamp: 1672099200,
     winnersNumber: 3,
+  },
+  two: {
+    endTimestamp: 1676332800,
+    winnersNumber: 2,
   },
 };
 
@@ -141,8 +145,8 @@ before(async function () {
   // Start contest wave
   await expect(
     contestContract.startWave(
-      contestWaveParams["1"].endTimestamp,
-      contestWaveParams["1"].winnersNumber
+      contestWaveParams.one.endTimestamp,
+      contestWaveParams.one.winnersNumber
     )
   ).to.be.not.reverted;
 });
