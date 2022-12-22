@@ -90,6 +90,7 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
     // TODO: Check that bet is not closed
     // TODO: Check that message sender is not bet participant
     // TODO: Check that participation deadline timestamp allows to take part
+    // TODO: Check that message sender is not a participation
     function takePart(
         uint256 tokenId,
         uint fee,
@@ -228,6 +229,10 @@ contract Bet is ERC721URIStorageUpgradeable, OwnableUpgradeable {
             participantAddresses,
             participantWinnings
         );
+    }
+
+    function getCurrentCounter() public view returns (uint) {
+        return _counter.current();
     }
 
     function getHubAddress() public view returns (address) {
