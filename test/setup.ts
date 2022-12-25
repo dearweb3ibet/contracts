@@ -47,7 +47,7 @@ export const betParams = {
     symbol: "ETHUSD",
     targetMinPrice: BigNumber.from(1000),
     targetMaxPrice: BigNumber.from(1200),
-    targetTimestamp: BigNumber.from(1667088000),
+    targetTimestamp: BigNumber.from(1677672000),
     participationDeadlineTimestamp: BigNumber.from(1667088000),
   },
 };

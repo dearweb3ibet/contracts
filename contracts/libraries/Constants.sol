@@ -2,5 +2,5 @@
 pragma solidity ^0.8.9;
 
 library Constants {
-    uint80 internal constant SECONDS_PER_DAY = 3600 * 24;
+    uint80 internal constant SECONDS_PER_DAY = 60 * 60 * 24;
 }

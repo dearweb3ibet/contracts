@@ -11,6 +11,7 @@ import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
 import "./libraries/Errors.sol";
+import "./libraries/Constants.sol";
 
 /**
  * Contract to create, close and participate in bets.
@@ -43,7 +44,6 @@ contract Bet is
     }
 
     // TODO: Check that message value greater than 0
-    // TODO: Check that target timestamp is not passed
     // TODO: Check that participation deadline timestamp is not passed
     // TODO: Check that symbol is supported by bet checker contract
     // TODO: Check that target min price should be less then target max price
@@ -60,6 +60,10 @@ contract Bet is
         // Checks
         _requireNotPaused();
         require(msg.value == fee, Errors.MESSAGE_VALUE_IS_INCORRECT);
+        require(
+            targetTimestamp > block.timestamp + Constants.SECONDS_PER_DAY,
+            Errors.MUST_BE_MORE_THAN_24_HOURS_BEFORE_TARGET_TIMESTAMP
+        );
         // Update counter
         _counter.increment();
         // Mint token

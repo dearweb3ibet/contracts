@@ -35,6 +35,26 @@ makeSuiteCleanRoom("Bet", function () {
     ).to.be.revertedWith("Message value is incorrect");
   });
 
+  it("User should fail to create a bet with incorrect target timestamp", async function () {
+    const incorrectTargetTimestamp = BigNumber.from("1672041600");
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          incorrectTargetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.revertedWith("Must be more than 24 hours before target timestamp");
+  });
+
   it("User should be able to create a bet", async function () {
     // Create bet
     const tx = betContract

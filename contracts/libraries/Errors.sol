@@ -10,6 +10,9 @@ library Errors {
         "Token is non-transferable";
 
     // Bet contract
+    string
+        internal constant MUST_BE_MORE_THAN_24_HOURS_BEFORE_TARGET_TIMESTAMP =
+        "Must be more than 24 hours before target timestamp";
     string internal constant FAILED_TO_SEND_FEE_TO_CONTEST =
         "Failed to send fee to contest";
     string internal constant FAILED_TO_SEND_FEE_TO_USAGE =
