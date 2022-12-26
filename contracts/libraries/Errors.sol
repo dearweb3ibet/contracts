@@ -24,6 +24,7 @@ library Errors {
         "Must be more than 8 hours before participation deadline";
     string internal constant SYMBOL_IS_NOT_SUPPORTED =
         "Symbol is not supported";
+    string internal constant BET_IS_CLOSED = "Bet is closed";
     string internal constant FAILED_TO_SEND_FEE_TO_CONTEST =
         "Failed to send fee to contest";
     string internal constant FAILED_TO_SEND_FEE_TO_USAGE =

@@ -108,7 +108,6 @@ contract Bet is
         return newTokenId;
     }
 
-    // TODO: Check that bet is not closed
     // TODO: Check that message sender is not bet participant
     // TODO: Check that participation deadline timestamp allows to take part
     // TODO: Check that message sender is not a participation
@@ -120,7 +119,8 @@ contract Bet is
         // Checks
         _requireNotPaused();
         require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
-        require(msg.value == fee, Errors.MESSAGE_VALUE_IS_INCORRECT);
+        require(msg.value == fee, Errors.FEE_MUST_BE_EQUAL_TO_MESSAGE_VALUE);
+        require(!_params[tokenId].isClosed, Errors.BET_IS_CLOSED);
         // Add participant
         DataTypes.BetParticipant memory tokenParticipant = DataTypes
             .BetParticipant(
@@ -142,13 +142,13 @@ contract Bet is
         emit Events.BetParamsSet(tokenId, tokenParams);
     }
 
-    // TODO: Check that bet is not closed
     // TODO: Check that target date allows close bet
     // TODO: Test function if bet hasn't winners
     function close(uint256 tokenId) public {
         // Checks
         _requireNotPaused();
         require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
+        require(!_params[tokenId].isClosed, Errors.BET_IS_CLOSED);
         // Load token params
         DataTypes.BetParams storage tokenParams = _params[tokenId];
         // Define whether a bet is successful or not

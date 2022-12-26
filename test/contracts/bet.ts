@@ -181,6 +181,40 @@ makeSuiteCleanRoom("Bet", function () {
     expect(firstParticipant.isFeeForSuccess).to.equal(true);
   });
 
+  it("User should fail to take part in a closed bet", async function () {
+    // Create bet by user one
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Close bet
+    await expect(
+      betContract.connect(userOne).close(createdBetId)
+    ).to.be.not.reverted;
+    // Take part by user two
+    await expect(
+      betContract
+        .connect(userTwo)
+        .takePart(createdBetId, betParticipantFees.eth005, false, {
+          value: betParticipantFees.eth005,
+        })
+    ).to.be.revertedWith("Bet is closed");
+  });
+
   it("User should be able to take part in a bet", async function () {
     // Define fees
     const userOneFee = betParticipantFees.eth005;
