@@ -10,9 +10,20 @@ library Errors {
         "Token is non-transferable";
 
     // Bet contract
+    string internal constant FEE_MUST_BE_EQUAL_TO_MESSAGE_VALUE =
+        "Fee must equal to message value";
+    string internal constant FEE_MUST_BE_GREATER_THAN_ZERO =
+        "Fee must be greater than zero";
+    string internal constant MAX_PRICE_MUST_BE_GREATER_THAN_MIN_PRICE =
+        "Max price must be greater than min price";
     string
         internal constant MUST_BE_MORE_THAN_24_HOURS_BEFORE_TARGET_TIMESTAMP =
         "Must be more than 24 hours before target timestamp";
+    string
+        internal constant MUST_BE_MORE_THAN_8_HOURS_BEFORE_PARTICIPATION_DEADLINE =
+        "Must be more than 8 hours before participation deadline";
+    string internal constant SYMBOL_IS_NOT_SUPPORTED =
+        "Symbol is not supported";
     string internal constant FAILED_TO_SEND_FEE_TO_CONTEST =
         "Failed to send fee to contest";
     string internal constant FAILED_TO_SEND_FEE_TO_USAGE =

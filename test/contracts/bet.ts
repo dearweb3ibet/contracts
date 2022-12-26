@@ -32,7 +32,47 @@ makeSuiteCleanRoom("Bet", function () {
           betParams.one.targetTimestamp,
           betParams.one.participationDeadlineTimestamp
         )
-    ).to.be.revertedWith("Message value is incorrect");
+    ).to.be.revertedWith("Fee must equal to message value");
+  });
+
+  it("User should fail to create a bet with zero fee", async function () {
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth0,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth0,
+          }
+        )
+    ).to.be.revertedWith("Fee must be greater than zero");
+  });
+
+  it("User should fail to create a bet with incorrect prices", async function () {
+    const incorrectTargetMinPrice = BigNumber.from(2000);
+    const incorrectTargetMaxPrice = BigNumber.from(1000);
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          incorrectTargetMinPrice,
+          incorrectTargetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.revertedWith("Max price must be greater than min price");
   });
 
   it("User should fail to create a bet with incorrect target timestamp", async function () {
@@ -53,6 +93,49 @@ makeSuiteCleanRoom("Bet", function () {
           }
         )
     ).to.be.revertedWith("Must be more than 24 hours before target timestamp");
+  });
+
+  it("User should fail to create a bet with incorrect participation deadline timestamp", async function () {
+    const incorrectParticipationDeadlineTimestamp =
+      BigNumber.from("1672041600");
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          incorrectParticipationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.revertedWith(
+      "Must be more than 8 hours before participation deadline"
+    );
+  });
+
+  it("User should fail to create a bet with not supported symbol", async function () {
+    const notSupportedSymbol = "MATICUSD";
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          notSupportedSymbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.revertedWith("Symbol is not supported");
   });
 
   it("User should be able to create a bet", async function () {

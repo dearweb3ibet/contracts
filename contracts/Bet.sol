@@ -43,11 +43,6 @@ contract Bet is
         _usageFeePercent = usageFeePercent;
     }
 
-    // TODO: Check that message value greater than 0
-    // TODO: Check that participation deadline timestamp is not passed
-    // TODO: Check that symbol is supported by bet checker contract
-    // TODO: Check that target min price should be less then target max price
-    // TODO: Check that bet checker can process input symbol
     function create(
         string memory uri,
         uint fee,
@@ -59,10 +54,25 @@ contract Bet is
     ) public payable returns (uint256) {
         // Checks
         _requireNotPaused();
-        require(msg.value == fee, Errors.MESSAGE_VALUE_IS_INCORRECT);
+        require(msg.value == fee, Errors.FEE_MUST_BE_EQUAL_TO_MESSAGE_VALUE);
+        require(fee > 0, Errors.FEE_MUST_BE_GREATER_THAN_ZERO);
+        require(
+            targetMaxPrice > targetMinPrice,
+            Errors.MAX_PRICE_MUST_BE_GREATER_THAN_MIN_PRICE
+        );
         require(
             targetTimestamp > block.timestamp + Constants.SECONDS_PER_DAY,
             Errors.MUST_BE_MORE_THAN_24_HOURS_BEFORE_TARGET_TIMESTAMP
+        );
+        require(
+            IBetChecker(IHub(_hubAddress).getBetCheckerAddress())
+                .getFeedAddress(symbol) != address(0),
+            Errors.SYMBOL_IS_NOT_SUPPORTED
+        );
+        require(
+            participationDeadlineTimestamp >
+                block.timestamp + Constants.SECONDS_PER_8_HOURS,
+            Errors.MUST_BE_MORE_THAN_8_HOURS_BEFORE_PARTICIPATION_DEADLINE
         );
         // Update counter
         _counter.increment();

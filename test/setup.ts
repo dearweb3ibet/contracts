@@ -48,11 +48,12 @@ export const betParams = {
     targetMinPrice: BigNumber.from(1000),
     targetMaxPrice: BigNumber.from(1200),
     targetTimestamp: BigNumber.from(1677672000),
-    participationDeadlineTimestamp: BigNumber.from(1667088000),
+    participationDeadlineTimestamp: BigNumber.from(1677672000),
   },
 };
 
 export const betParticipantFees = {
+  eth0: BigNumber.from("0"),
   eth003: BigNumber.from("30000000000000000"),
   eth005: BigNumber.from("50000000000000000"),
   eth01: BigNumber.from("100000000000000000"),
