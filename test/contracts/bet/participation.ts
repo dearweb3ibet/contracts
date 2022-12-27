@@ -1,5 +1,7 @@
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { SECONDS_PER_HOUR } from "../../helpers/constants";
 import {
   betContract,
   betParams,
@@ -43,6 +45,40 @@ makeSuiteCleanRoom("Bet Participation", function () {
           value: betParticipantFees.eth005,
         })
     ).to.be.revertedWith("Bet is closed");
+  });
+
+  it("User should fail to take part in a bet with passed participation deadline", async function () {
+    const participationDeadlineTimestamp =
+      Math.floor(new Date().getTime() / 1000) + 10 * SECONDS_PER_HOUR;
+    // Create bet by user one
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Increase network time
+    await time.increase(12 * SECONDS_PER_HOUR);
+    // Take part by user two
+    await expect(
+      betContract
+        .connect(userTwo)
+        .takePart(createdBetId, betParticipantFees.eth005, false, {
+          value: betParticipantFees.eth005,
+        })
+    ).to.be.revertedWith("Participation deadline is expired");
   });
 
   it("User should be able to take part in a bet", async function () {

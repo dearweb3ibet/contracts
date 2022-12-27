@@ -25,6 +25,8 @@ library Errors {
     string internal constant SYMBOL_IS_NOT_SUPPORTED =
         "Symbol is not supported";
     string internal constant BET_IS_CLOSED = "Bet is closed";
+    string internal constant PARTICIPATION_DEADLINE_IS_EXPIRED =
+        "Participation deadline is expired";
     string internal constant FAILED_TO_SEND_FEE_TO_CONTEST =
         "Failed to send fee to contest";
     string internal constant FAILED_TO_SEND_FEE_TO_USAGE =

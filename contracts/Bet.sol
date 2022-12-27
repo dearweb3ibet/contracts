@@ -109,8 +109,6 @@ contract Bet is
     }
 
     // TODO: Check that message sender is not bet participant
-    // TODO: Check that participation deadline timestamp allows to take part
-    // TODO: Check that message sender is not a participation
     function takePart(
         uint256 tokenId,
         uint fee,
@@ -121,6 +119,10 @@ contract Bet is
         require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
         require(msg.value == fee, Errors.FEE_MUST_BE_EQUAL_TO_MESSAGE_VALUE);
         require(!_params[tokenId].isClosed, Errors.BET_IS_CLOSED);
+        require(
+            _params[tokenId].participationDeadlineTimestamp > block.timestamp,
+            Errors.PARTICIPATION_DEADLINE_IS_EXPIRED
+        );
         // Add participant
         DataTypes.BetParticipant memory tokenParticipant = DataTypes
             .BetParticipant(
