@@ -7,7 +7,7 @@ import {
   makeSuiteCleanRoom,
 } from "../setup";
 
-makeSuiteCleanRoom("BetChecker", function () {
+makeSuiteCleanRoom("Bet Checker", function () {
   it("Deployer should set and update feed address", async function () {
     // Check address before
     expect(
