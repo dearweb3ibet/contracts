@@ -7,7 +7,6 @@ import {
   betParams,
   betParticipantFees,
   contestContract,
-  deployer,
   makeSuiteCleanRoom,
   usageContract,
   userOne,

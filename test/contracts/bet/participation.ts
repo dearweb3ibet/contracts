@@ -1,21 +1,13 @@
 import { expect } from "chai";
-import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import {
   betContract,
-  betContractParams,
   betParams,
   betParticipantFees,
-  contestContract,
-  deployer,
   makeSuiteCleanRoom,
-  usageContract,
   userOne,
-  userOneAddress,
   userThree,
-  userThreeAddress,
   userTwo,
-  userTwoAddress,
 } from "../../setup";
 
 makeSuiteCleanRoom("Bet Participation", function () {
