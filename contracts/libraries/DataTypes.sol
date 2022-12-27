@@ -22,6 +22,7 @@ library DataTypes {
         address accountAddress;
         uint fee;
         bool isFeeForSuccess;
+        bool isWinner;
         uint winning;
     }
 

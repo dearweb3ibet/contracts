@@ -3,7 +3,6 @@ pragma solidity ^0.8.9;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IBetChecker.sol";
 import "./libraries/Constants.sol";
 import "./libraries/Errors.sol";

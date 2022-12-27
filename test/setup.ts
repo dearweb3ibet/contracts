@@ -31,6 +31,9 @@ export const betCheckerContractParams = {
   feedAddressBtcUsdOne: "0x12162c3E810393dEC01362aBf156D7ecf6159528",
   feedAddressBtcUsdTwo: "0x007A22900a3B98143368Bd5906f8E17e9867581b",
 };
+export const mockBetCheckerContractParams = {
+  isPositive: false,
+};
 export const betContractParams = {
   usageFeePercent: 10,
   contestFeePercent: 15,
@@ -137,7 +140,10 @@ before(async function () {
   betCheckerContract.initialize();
   // Deploy mock bet checker contract
   mockBetCheckerContract = await new MockBetChecker__factory(deployer).deploy();
-  mockBetCheckerContract.setFeedAddresses(
+  await mockBetCheckerContract.initialize(
+    mockBetCheckerContractParams.isPositive
+  );
+  await mockBetCheckerContract.setFeedAddresses(
     [betCheckerContractParams.feedSymbolEthUsd],
     [betCheckerContractParams.feedAddressEthUsd]
   );

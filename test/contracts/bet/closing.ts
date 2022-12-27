@@ -9,7 +9,9 @@ import {
   betParams,
   betParticipantFees,
   contestContract,
+  deployer,
   makeSuiteCleanRoom,
+  mockBetCheckerContract,
   usageContract,
   userOne,
   userOneAddress,
@@ -47,20 +49,28 @@ makeSuiteCleanRoom("Bet Closing", function () {
   });
 
   it("User should be able to close a failed bet with one participant and participant should receive contest points", async function () {
+    // Define fees
+    const userOneFee = betParticipantFees.eth005;
+    const feeForContest = userOneFee
+      .mul(betContractParams.contestFeePercent)
+      .div(BigNumber.from(100));
+    const feeForUsage = userOneFee
+      .mul(betContractParams.usageFeePercent)
+      .div(BigNumber.from(100));
     // Create bet by user one
     await expect(
       betContract
         .connect(userOne)
         .create(
           betParams.one.uri,
-          betParticipantFees.eth005,
+          userOneFee,
           betParams.one.symbol,
           betParams.one.targetMinPrice,
           betParams.one.targetMaxPrice,
           betParams.one.targetTimestamp,
           betParams.one.participationDeadlineTimestamp,
           {
-            value: betParticipantFees.eth005,
+            value: userOneFee,
           }
         )
     ).to.be.not.reverted;
@@ -71,7 +81,20 @@ makeSuiteCleanRoom("Bet Closing", function () {
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
-    ).to.be.not.reverted;
+    ).to.changeEtherBalances(
+      [
+        userOneAddress,
+        betContract.address,
+        contestContract.address,
+        usageContract.address,
+      ],
+      [
+        ethers.constants.Zero,
+        feeForContest.add(feeForUsage).mul(ethers.constants.NegativeOne),
+        feeForContest,
+        feeForUsage,
+      ]
+    );
     // Check contest wave participants
     const contestLastWaveId = await contestContract.getCurrentCounter();
     const contestParticipants = await contestContract.getWaveParticipants(
@@ -86,22 +109,81 @@ makeSuiteCleanRoom("Bet Closing", function () {
     }
   });
 
-  it("User should be able to close a failed bet with four participants and participants should receive winnings and contest points", async function () {
-    // Define fees and distributions
+  it("User should be able to close a successed bet with one participant and participant should get back fee and receive contest points", async function () {
+    // Make mock bet checker contract positive
+    await mockBetCheckerContract.connect(deployer).setIsPositive(true);
+    // Define fees
+    const userOneFee = betParticipantFees.eth005;
+    // Create bet by user one
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          userOneFee,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: userOneFee,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Increase network time
+    await time.increase(2 * SECONDS_PER_DAY);
+    // Close bet
+    await expect(
+      betContract.connect(userOne).close(createdBetId)
+    ).to.changeEtherBalances(
+      [
+        userOneAddress,
+        betContract.address,
+        contestContract.address,
+        usageContract.address,
+      ],
+      [
+        userOneFee,
+        userOneFee.mul(ethers.constants.NegativeOne),
+        ethers.constants.Zero,
+        ethers.constants.Zero,
+      ]
+    );
+    // Check contest wave participants
+    const contestLastWaveId = await contestContract.getCurrentCounter();
+    const contestParticipants = await contestContract.getWaveParticipants(
+      contestLastWaveId
+    );
+    for (let contestParticipant of contestParticipants) {
+      if (contestParticipant.accountAddress === userOneAddress) {
+        expect(contestParticipant.successes).be.eq(BigNumber.from(1));
+        expect(contestParticipant.failures).be.eq(BigNumber.from(0));
+        expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
+      }
+    }
+  });
+
+  it("User should be able to close a failed bet with three participants and participants should receive winning and contest points", async function () {
+    // Define fees
     const userOneFee = betParticipantFees.eth005;
     const userTwoFee = betParticipantFees.eth01;
     const userThreeFee = betParticipantFees.eth003;
-    const feeForSuccess = userOneFee;
-    const feeForFailure = userTwoFee.add(userThreeFee);
-    const feeForContest = feeForSuccess
+    const feeFromLosers = userOneFee;
+    const feeFromWinners = userTwoFee.add(userThreeFee);
+    const feeForContest = feeFromLosers
       .mul(betContractParams.contestFeePercent)
       .div(BigNumber.from(100));
-    const feeForUsage = feeForSuccess
+    const feeForUsage = feeFromLosers
       .mul(betContractParams.usageFeePercent)
       .div(BigNumber.from(100));
-    const feeForWinners = feeForSuccess.sub(feeForContest).sub(feeForUsage);
-    const userTwoWinning = userTwoFee.mul(feeForWinners).div(feeForFailure);
-    const userThreeWinning = userThreeFee.mul(feeForWinners).div(feeForFailure);
+    const feeForWinnings = feeFromLosers.sub(feeForContest).sub(feeForUsage);
+    const userTwoWinning = userTwoFee.mul(feeForWinnings).div(feeFromWinners);
+    const userThreeWinning = userThreeFee
+      .mul(feeForWinnings)
+      .div(feeFromWinners);
     // Create bet by user one
     await expect(
       betContract
@@ -138,9 +220,9 @@ makeSuiteCleanRoom("Bet Closing", function () {
     // Increase network time
     await time.increase(2 * SECONDS_PER_DAY);
     // Close bet
-    const tx = betContract.connect(userOne).close(createdBetId);
-    await expect(tx).to.be.not.reverted;
-    await expect(tx).to.changeEtherBalances(
+    await expect(
+      betContract.connect(userOne).close(createdBetId)
+    ).to.changeEtherBalances(
       [
         userOne,
         userTwo,
@@ -184,6 +266,106 @@ makeSuiteCleanRoom("Bet Closing", function () {
         expect(contestParticipant.successes).be.eq(BigNumber.from(1));
         expect(contestParticipant.failures).be.eq(BigNumber.from(0));
         expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
+      }
+    }
+  });
+
+  it("User should be able to close a failed bet with three participants and participants should receive winning and contest points", async function () {
+    // Make mock bet checker contract positive
+    await mockBetCheckerContract.connect(deployer).setIsPositive(true);
+    // Define fees
+    const userOneFee = betParticipantFees.eth005;
+    const userTwoFee = betParticipantFees.eth01;
+    const userThreeFee = betParticipantFees.eth003;
+    const feeFromLosers = userTwoFee.add(userThreeFee);
+    const feeForContest = feeFromLosers
+      .mul(betContractParams.contestFeePercent)
+      .div(BigNumber.from(100));
+    const feeForUsage = feeFromLosers
+      .mul(betContractParams.usageFeePercent)
+      .div(BigNumber.from(100));
+    const feeForWinnings = feeFromLosers.sub(feeForContest).sub(feeForUsage);
+    const userOneWinning = feeForWinnings;
+    // Create bet by user one
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          userOneFee,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: userOneFee,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Take part in bet by user two
+    await expect(
+      betContract.connect(userTwo).takePart(createdBetId, userTwoFee, false, {
+        value: userTwoFee,
+      })
+    ).to.be.not.reverted;
+    // Take part in bet by user three
+    await expect(
+      betContract
+        .connect(userThree)
+        .takePart(createdBetId, userThreeFee, false, {
+          value: userThreeFee,
+        })
+    ).to.be.not.reverted;
+    // Increase network time
+    await time.increase(2 * SECONDS_PER_DAY);
+    // Close bet
+    await expect(
+      betContract.connect(userOne).close(createdBetId)
+    ).to.changeEtherBalances(
+      [
+        userOne,
+        userTwo,
+        userThree,
+        betContract.address,
+        contestContract.address,
+        usageContract.address,
+      ],
+      [
+        userOneFee.add(userOneWinning),
+        ethers.constants.Zero,
+        ethers.constants.Zero,
+        userOneFee
+          .add(userOneWinning)
+          .add(feeForContest)
+          .add(feeForUsage)
+          .mul(ethers.constants.NegativeOne),
+        feeForContest,
+        feeForUsage,
+      ]
+    );
+    // Check contest wave participants
+    const contestLastWaveId = await contestContract.getCurrentCounter();
+    const contestParticipants = await contestContract.getWaveParticipants(
+      contestLastWaveId
+    );
+    for (let contestParticipant of contestParticipants) {
+      if (contestParticipant.accountAddress === userOneAddress) {
+        expect(contestParticipant.successes).be.eq(BigNumber.from(1));
+        expect(contestParticipant.failures).be.eq(BigNumber.from(0));
+        expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
+      }
+      if (contestParticipant.accountAddress === userTwoAddress) {
+        expect(contestParticipant.successes).be.eq(BigNumber.from(0));
+        expect(contestParticipant.failures).be.eq(BigNumber.from(1));
+        expect(contestParticipant.variance).to.be.eq(BigNumber.from(-1));
+      }
+      if (contestParticipant.accountAddress === userThreeAddress) {
+        expect(contestParticipant.successes).be.eq(BigNumber.from(0));
+        expect(contestParticipant.failures).be.eq(BigNumber.from(1));
+        expect(contestParticipant.variance).to.be.eq(BigNumber.from(-1));
       }
     }
   });

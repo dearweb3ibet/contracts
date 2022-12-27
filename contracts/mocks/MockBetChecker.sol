@@ -1,15 +1,29 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../interfaces/IBetChecker.sol";
 import "../libraries/Errors.sol";
 
 /**
- * Mock contract that return always a negative checking result.
+ * Mock contract that return a positive or negative checking result.
  */
-contract MockBetChecker is IBetChecker, Ownable {
+contract MockBetChecker is IBetChecker, OwnableUpgradeable {
+    bool private _isPositive;
     mapping(string => address) private _feedAddresses;
+
+    function initialize(bool isPositive) public initializer {
+        __Ownable_init();
+        _isPositive = isPositive;
+    }
+
+    function getIsPositive() public view returns (bool) {
+        return _isPositive;
+    }
+
+    function setIsPositive(bool isPositive) public onlyOwner {
+        _isPositive = isPositive;
+    }
 
     function setFeedAddresses(
         string[] memory feedSymbols,
@@ -45,7 +59,7 @@ contract MockBetChecker is IBetChecker, Ownable {
         uint,
         int,
         int
-    ) external pure returns (bool, int, int) {
-        return (false, 0, 0);
+    ) external view returns (bool, int, int) {
+        return (_isPositive, 0, 0);
     }
 }

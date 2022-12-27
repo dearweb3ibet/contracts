@@ -98,7 +98,7 @@ contract Bet is
         emit Events.BetParamsSet(newTokenId, tokenParams);
         // Add participant
         DataTypes.BetParticipant memory tokenParticipant = DataTypes
-            .BetParticipant(block.timestamp, msg.sender, fee, true, 0);
+            .BetParticipant(block.timestamp, msg.sender, fee, true, false, 0);
         _participants[newTokenId].push(tokenParticipant);
         emit Events.BetParticipantSet(newTokenId, msg.sender, tokenParticipant);
         // Set uri
@@ -139,6 +139,7 @@ contract Bet is
                 msg.sender,
                 fee,
                 isFeeForSuccess,
+                false,
                 0
             );
         _participants[tokenId].push(tokenParticipant);
@@ -219,19 +220,23 @@ contract Bet is
                 tokenId
             ][i];
             // Calculate winning
+            bool isWinner;
             uint winning;
             if (participant.isFeeForSuccess && isBetSuccessful) {
+                isWinner = true;
                 winning =
                     (participant.fee * feeForWinners) /
                     tokenParams.feeForSuccess;
             }
             if (!participant.isFeeForSuccess && !isBetSuccessful) {
+                isWinner = true;
                 winning =
                     (participant.fee * feeForWinners) /
                     tokenParams.feeForFailure;
             }
-            if (winning != 0) {
+            if (isWinner) {
                 // Save winning
+                participant.isWinner = isWinner;
                 participant.winning = winning;
                 emit Events.BetParticipantSet(
                     tokenId,
@@ -247,24 +252,8 @@ contract Bet is
                 winnersNumber++;
             }
         }
-        // Send participants and their winnings contest contract
-        address[] memory participantAddresses = new address[](
-            _participants[tokenId].length
-        );
-        uint[] memory participantWinnings = new uint[](
-            _participants[tokenId].length
-        );
-        for (uint i = 0; i < _participants[tokenId].length; i++) {
-            DataTypes.BetParticipant memory participant = _participants[
-                tokenId
-            ][i];
-            participantAddresses[i] = participant.accountAddress;
-            participantWinnings[i] = participant.winning;
-        }
-        IContest(IHub(_hubAddress).getContestAddress()).processBetParticipants(
-            participantAddresses,
-            participantWinnings
-        );
+        IContest(IHub(_hubAddress).getContestAddress())
+            .processClosedBetParticipants(_participants[tokenId]);
     }
 
     function pause() public onlyOwner {

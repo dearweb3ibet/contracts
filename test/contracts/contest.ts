@@ -30,7 +30,7 @@ makeSuiteCleanRoom("Contest", function () {
 
   it("User should fail to use function to process bet participatns", async function () {
     await expect(
-      contestContract.processBetParticipants([], [])
+      contestContract.processClosedBetParticipants([])
     ).to.be.revertedWith("Only bet contract can be sender");
   });
 

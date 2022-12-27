@@ -95,11 +95,10 @@ contract Contest is IContest, OwnableUpgradeable {
     }
 
     /**
-     * Update last wave participant by bet participants data.
+     * Update last wave participant by data about closed bet participants.
      */
-    function processBetParticipants(
-        address[] memory betParticipantAddresses,
-        uint[] memory betParticipantWinnings
+    function processClosedBetParticipants(
+        DataTypes.BetParticipant[] memory betParticipants
     ) public {
         // Checks
         require(
@@ -119,17 +118,17 @@ contract Contest is IContest, OwnableUpgradeable {
         DataTypes.ContestWaveParticipant[]
             storage waveParticipants = _waveParticipants[_counter.current()];
         // Process every bet participant
-        for (uint i = 0; i < betParticipantAddresses.length; i++) {
+        for (uint i = 0; i < betParticipants.length; i++) {
             // Try find wave participant by bet participant
             bool isWaveParticipantFound = false;
             for (uint j = 0; j < waveParticipants.length; j++) {
                 if (
                     waveParticipants[j].accountAddress ==
-                    betParticipantAddresses[i]
+                    betParticipants[i].accountAddress
                 ) {
                     isWaveParticipantFound = true;
                     // Update wave participant if found
-                    if (betParticipantWinnings[i] > 0) {
+                    if (betParticipants[i].isWinner) {
                         waveParticipants[j].successes++;
                     } else {
                         waveParticipants[j].failures++;
@@ -150,10 +149,10 @@ contract Contest is IContest, OwnableUpgradeable {
                 // Create wave
                 DataTypes.ContestWaveParticipant
                     memory waveParticipant = DataTypes.ContestWaveParticipant(
-                        betParticipantAddresses[i],
-                        betParticipantWinnings[i] > 0 ? int(1) : int(0),
-                        betParticipantWinnings[i] > 0 ? int(0) : int(1),
-                        betParticipantWinnings[i] > 0 ? int(1) : int(-1)
+                        betParticipants[i].accountAddress,
+                        betParticipants[i].isWinner ? int(1) : int(0),
+                        !betParticipants[i].isWinner ? int(1) : int(0),
+                        betParticipants[i].isWinner ? int(1) : int(-1)
                     );
                 waveParticipants.push(waveParticipant);
                 // Emit event
