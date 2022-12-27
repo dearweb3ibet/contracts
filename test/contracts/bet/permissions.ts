@@ -7,7 +7,7 @@ import {
   userOne,
 } from "../../setup";
 
-makeSuiteCleanRoom("Bet Owning", function () {
+makeSuiteCleanRoom("Bet Permissions", function () {
   it("User should fail to use only owner functions", async function () {
     // Pause functions
     await expect(betContract.connect(userOne).pause()).to.be.revertedWith(

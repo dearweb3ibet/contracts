@@ -2,19 +2,18 @@ import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { SECONDS_PER_DAY } from "../helpers/constants";
+import { SECONDS_PER_DAY } from "../../helpers/constants";
 import {
   contestContract,
   contestWaveParams,
   deployer,
   makeSuiteCleanRoom,
-  userOne,
   userOneAddress,
   userThreeAddress,
   userTwoAddress,
-} from "../setup";
+} from "../../setup";
 
-makeSuiteCleanRoom("Contest", function () {
+makeSuiteCleanRoom("Contest Wave Closing", function () {
   beforeEach(async function () {
     // Increase network time
     await time.increase(2 * SECONDS_PER_DAY);
@@ -27,12 +26,6 @@ makeSuiteCleanRoom("Contest", function () {
         userTwoAddress,
         userThreeAddress,
       ]);
-  });
-
-  it("User should fail to use function to process bet participatns", async function () {
-    await expect(
-      contestContract.connect(userOne).processClosedBetParticipants([])
-    ).to.be.revertedWith("Only bet contract can be sender");
   });
 
   it("Deployer should fail to close already closed last wave", async function () {
@@ -72,39 +65,7 @@ makeSuiteCleanRoom("Contest", function () {
     ).to.be.revertedWith("Wave end timestamp has not come");
   });
 
-  it("User should fail to start wave", async function () {
-    await expect(
-      contestContract
-        .connect(userOne)
-        .startWave(
-          contestWaveParams.two.endTimestamp,
-          contestWaveParams.two.winnersNumber
-        )
-    ).to.be.revertedWith("Ownable: caller is not the owner");
-  });
-
-  it("Deployer should fail to start wave twice", async function () {
-    // First try to start wave
-    await expect(
-      contestContract
-        .connect(deployer)
-        .startWave(
-          contestWaveParams.two.endTimestamp,
-          contestWaveParams.two.winnersNumber
-        )
-    ).to.be.not.reverted;
-    // Second try to start wave
-    await expect(
-      contestContract
-        .connect(deployer)
-        .startWave(
-          contestWaveParams.two.endTimestamp,
-          contestWaveParams.two.winnersNumber
-        )
-    ).to.be.revertedWith("Last wave is not closed");
-  });
-
-  it("Deployer should be able to start and close wave and winners should receive winnings", async function () {
+  it("Deployer should be able close wave and winners should receive winnings", async function () {
     // Start wave
     await expect(
       contestContract
