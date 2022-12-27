@@ -6,9 +6,22 @@ import {
   betParams,
   deployer,
   makeSuiteCleanRoom,
+  userOne,
 } from "../setup";
 
 makeSuiteCleanRoom("Bet Checker", function () {
+  it("User should fail to use only owner functions", async function () {
+    await expect(
+      betCheckerContract.connect(userOne).setFeedAddresses([], [])
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+  });
+
+  it("Deployer should be able to use only owner functions", async function () {
+    await expect(
+      betCheckerContract.connect(deployer).setFeedAddresses([], [])
+    ).to.be.not.reverted;
+  });
+
   it("User should fail to check price if day start timestamp has not come", async function () {
     await expect(
       betCheckerContract.isPriceExist(

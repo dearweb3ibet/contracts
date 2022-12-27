@@ -8,6 +8,7 @@ import {
   contestWaveParams,
   deployer,
   makeSuiteCleanRoom,
+  userOne,
   userOneAddress,
   userThreeAddress,
   userTwoAddress,
@@ -30,7 +31,7 @@ makeSuiteCleanRoom("Contest", function () {
 
   it("User should fail to use function to process bet participatns", async function () {
     await expect(
-      contestContract.processClosedBetParticipants([])
+      contestContract.connect(userOne).processClosedBetParticipants([])
     ).to.be.revertedWith("Only bet contract can be sender");
   });
 
@@ -69,6 +70,17 @@ makeSuiteCleanRoom("Contest", function () {
         .connect(deployer)
         .closeWave(lastWaveId, [userOneAddress, userTwoAddress])
     ).to.be.revertedWith("Wave end timestamp has not come");
+  });
+
+  it("User should fail to start wave", async function () {
+    await expect(
+      contestContract
+        .connect(userOne)
+        .startWave(
+          contestWaveParams.two.endTimestamp,
+          contestWaveParams.two.winnersNumber
+        )
+    ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 
   it("Deployer should fail to start wave twice", async function () {
