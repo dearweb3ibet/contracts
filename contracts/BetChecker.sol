@@ -263,14 +263,17 @@ contract BetChecker is IBetChecker, OwnableUpgradeable {
         return (minPrice, maxPrice);
     }
 
-    // TODO: Check that day has passed
     function isPriceExist(
         string memory symbol,
         uint dayStartTimestamp,
         int minPrice,
         int maxPrice
     ) external view returns (bool, int, int) {
-        // Check input data
+        // Checks
+        require(
+            dayStartTimestamp < block.timestamp,
+            Errors.DAY_START_TIMESTAMP_HAS_NOT_COME
+        );
         require(
             minPrice <= maxPrice,
             Errors.MIN_PRICE_MUST_BE_LOWER_THAN_MAX_PRICE

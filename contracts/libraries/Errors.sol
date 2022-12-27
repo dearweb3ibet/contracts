@@ -43,6 +43,8 @@ library Errors {
         "Lenghs of input arrays must be the same";
     string internal constant MIN_PRICE_MUST_BE_LOWER_THAN_MAX_PRICE =
         "Min price must be lower than max price";
+    string internal constant DAY_START_TIMESTAMP_HAS_NOT_COME =
+        "Day start timestamp has not come";
     string internal constant NOT_FOUND_FEED_FOR_SYMBOL =
         "Not found feed for symbol";
 
