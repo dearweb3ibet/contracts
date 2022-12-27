@@ -81,6 +81,44 @@ makeSuiteCleanRoom("Bet Participation", function () {
     ).to.be.revertedWith("Participation deadline is expired");
   });
 
+  it("User should fail to take part in a bet twice", async function () {
+    // Create bet by user one
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Take part by user two (try one)
+    await expect(
+      betContract
+        .connect(userTwo)
+        .takePart(createdBetId, betParticipantFees.eth005, false, {
+          value: betParticipantFees.eth005,
+        })
+    ).to.be.not.reverted;
+    // Take part by user two (try two)
+    await expect(
+      betContract
+        .connect(userTwo)
+        .takePart(createdBetId, betParticipantFees.eth005, false, {
+          value: betParticipantFees.eth005,
+        })
+    ).to.be.revertedWith("Sender is already participating in bet");
+  });
+
   it("User should be able to take part in a bet", async function () {
     // Define fees
     const userOneFee = betParticipantFees.eth005;

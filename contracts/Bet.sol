@@ -108,7 +108,6 @@ contract Bet is
         return newTokenId;
     }
 
-    // TODO: Check that message sender is not bet participant
     function takePart(
         uint256 tokenId,
         uint fee,
@@ -122,6 +121,16 @@ contract Bet is
         require(
             _params[tokenId].participationDeadlineTimestamp > block.timestamp,
             Errors.PARTICIPATION_DEADLINE_IS_EXPIRED
+        );
+        bool isSenderParticipant = false;
+        for (uint i = 0; i < _participants[tokenId].length; i++) {
+            if (_participants[tokenId][i].accountAddress == msg.sender) {
+                isSenderParticipant = true;
+            }
+        }
+        require(
+            !isSenderParticipant,
+            Errors.SENDER_IS_ALREADY_PARTICIPATING_IN_BET
         );
         // Add participant
         DataTypes.BetParticipant memory tokenParticipant = DataTypes
