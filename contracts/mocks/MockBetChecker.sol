@@ -6,7 +6,7 @@ import "../interfaces/IBetChecker.sol";
 import "../libraries/Errors.sol";
 
 /**
- * TODO: Add docs
+ * Mock contract that return always a negative checking result.
  */
 contract MockBetChecker is IBetChecker, Ownable {
     mapping(string => address) private _feedAddresses;
