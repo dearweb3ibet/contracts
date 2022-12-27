@@ -13,7 +13,7 @@ import {
 } from "../setup";
 
 makeSuiteCleanRoom("Bio", function () {
-  it("User should own only one token after several uri changes", async function () {
+  it("User should to own only one token after several uri changes", async function () {
     // Before changes
     expect(await bioContract.balanceOf(userOneAddress)).to.equal(
       ethers.constants.Zero
