@@ -153,7 +153,6 @@ contract Bet is
         emit Events.BetParamsSet(tokenId, tokenParams);
     }
 
-    // TODO: Test function if bet hasn't winners
     function close(uint256 tokenId) public {
         // Checks
         _requireNotPaused();

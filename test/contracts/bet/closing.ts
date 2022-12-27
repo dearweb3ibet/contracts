@@ -46,7 +46,47 @@ makeSuiteCleanRoom("Bet Closing", function () {
     ).to.be.revertedWith("Target timestamp has not come");
   });
 
-  it("User should be able to close a bet and participants should receive contest points", async function () {
+  it("User should be able to close a failed bet with one participant and participant should receive contest points", async function () {
+    // Create bet by user one
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Increase network time
+    await time.increase(2 * SECONDS_PER_DAY);
+    // Close bet
+    await expect(
+      betContract.connect(userOne).close(createdBetId)
+    ).to.be.not.reverted;
+    // Check contest wave participants
+    const contestLastWaveId = await contestContract.getCurrentCounter();
+    const contestParticipants = await contestContract.getWaveParticipants(
+      contestLastWaveId
+    );
+    for (let contestParticipant of contestParticipants) {
+      if (contestParticipant.accountAddress === userOneAddress) {
+        expect(contestParticipant.successes).be.eq(BigNumber.from(0));
+        expect(contestParticipant.failures).be.eq(BigNumber.from(1));
+        expect(contestParticipant.variance).to.be.eq(BigNumber.from(-1));
+      }
+    }
+  });
+
+  it("User should be able to close a failed bet with four participants and participants should receive winnings and contest points", async function () {
     // Define fees and distributions
     const userOneFee = betParticipantFees.eth005;
     const userTwoFee = betParticipantFees.eth01;
