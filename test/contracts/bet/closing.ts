@@ -1,6 +1,8 @@
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
+import { SECONDS_PER_DAY } from "../../helpers/constants";
 import {
   betContract,
   betContractParams,
@@ -18,6 +20,32 @@ import {
 } from "../../setup";
 
 makeSuiteCleanRoom("Bet Closing", function () {
+  it("User should fail to close a bet with not expired target timestamp", async function () {
+    // Create bet by user one
+    await expect(
+      betContract
+        .connect(userOne)
+        .create(
+          betParams.one.uri,
+          betParticipantFees.eth005,
+          betParams.one.symbol,
+          betParams.one.targetMinPrice,
+          betParams.one.targetMaxPrice,
+          betParams.one.targetTimestamp,
+          betParams.one.participationDeadlineTimestamp,
+          {
+            value: betParticipantFees.eth005,
+          }
+        )
+    ).to.be.not.reverted;
+    // Get created bet id
+    const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Close bet
+    await expect(
+      betContract.connect(userOne).close(createdBetId)
+    ).to.be.revertedWith("Target timestamp has not come");
+  });
+
   it("User should be able to close a bet and participants should receive contest points", async function () {
     // Define fees and distributions
     const userOneFee = betParticipantFees.eth005;
@@ -67,6 +95,8 @@ makeSuiteCleanRoom("Bet Closing", function () {
           value: userThreeFee,
         })
     ).to.be.not.reverted;
+    // Increase network time
+    await time.increase(2 * SECONDS_PER_DAY);
     // Close bet
     const tx = betContract.connect(userOne).close(createdBetId);
     await expect(tx).to.be.not.reverted;

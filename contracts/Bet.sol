@@ -153,13 +153,16 @@ contract Bet is
         emit Events.BetParamsSet(tokenId, tokenParams);
     }
 
-    // TODO: Check that target date allows close bet
     // TODO: Test function if bet hasn't winners
     function close(uint256 tokenId) public {
         // Checks
         _requireNotPaused();
         require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
         require(!_params[tokenId].isClosed, Errors.BET_IS_CLOSED);
+        require(
+            _params[tokenId].targetTimestamp < block.timestamp,
+            Errors.TARGET_TIMESTAMP_HAS_NOT_COME
+        );
         // Load token params
         DataTypes.BetParams storage tokenParams = _params[tokenId];
         // Define whether a bet is successful or not

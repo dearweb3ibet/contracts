@@ -29,6 +29,8 @@ library Errors {
         "Participation deadline is expired";
     string internal constant SENDER_IS_ALREADY_PARTICIPATING_IN_BET =
         "Sender is already participating in bet";
+    string internal constant TARGET_TIMESTAMP_HAS_NOT_COME =
+        "Target timestamp has not come";
     string internal constant FAILED_TO_SEND_FEE_TO_CONTEST =
         "Failed to send fee to contest";
     string internal constant FAILED_TO_SEND_FEE_TO_USAGE =

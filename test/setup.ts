@@ -17,7 +17,12 @@ import {
   Usage,
   Usage__factory,
 } from "../typechain-types";
-import { revertToSnapshot, takeSnapshot } from "./helpers/utils";
+import { SECONDS_PER_DAY, SECONDS_PER_HOUR } from "./helpers/constants";
+import {
+  getEpochSeconds,
+  revertToSnapshot,
+  takeSnapshot,
+} from "./helpers/utils";
 
 export const betCheckerContractParams = {
   feedSymbolEthUsd: "ETHUSD",
@@ -47,8 +52,10 @@ export const betParams = {
     symbol: "ETHUSD",
     targetMinPrice: BigNumber.from(1000),
     targetMaxPrice: BigNumber.from(1200),
-    targetTimestamp: BigNumber.from(1677672000),
-    participationDeadlineTimestamp: BigNumber.from(1677672000),
+    targetTimestamp: BigNumber.from(getEpochSeconds() + 2 * SECONDS_PER_DAY),
+    participationDeadlineTimestamp: BigNumber.from(
+      getEpochSeconds() + SECONDS_PER_DAY
+    ),
   },
 };
 

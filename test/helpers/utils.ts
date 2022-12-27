@@ -8,3 +8,7 @@ export async function takeSnapshot() {
 export async function revertToSnapshot() {
   await ethers.provider.send("evm_revert", [snapshotId]);
 }
+
+export function getEpochSeconds(): number {
+  return Math.floor(new Date().getTime() / 1000);
+}

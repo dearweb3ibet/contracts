@@ -1,7 +1,8 @@
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { SECONDS_PER_HOUR } from "../../helpers/constants";
+import { SECONDS_PER_DAY, SECONDS_PER_HOUR } from "../../helpers/constants";
+import { getEpochSeconds } from "../../helpers/utils";
 import {
   betContract,
   betParams,
@@ -33,6 +34,8 @@ makeSuiteCleanRoom("Bet Participation", function () {
     ).to.be.not.reverted;
     // Get created bet id
     const createdBetId = await betContract.connect(userOne).getCurrentCounter();
+    // Increase network time
+    await time.increase(2 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
@@ -49,7 +52,7 @@ makeSuiteCleanRoom("Bet Participation", function () {
 
   it("User should fail to take part in a bet with passed participation deadline", async function () {
     const participationDeadlineTimestamp =
-      Math.floor(new Date().getTime() / 1000) + 10 * SECONDS_PER_HOUR;
+      getEpochSeconds() + 10 * SECONDS_PER_HOUR;
     // Create bet by user one
     await expect(
       betContract
