@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interfaces/IContest.sol";
+import "./interfaces/IHub.sol";
 import "./libraries/DataTypes.sol";
 import "./libraries/Events.sol";
 import "./libraries/Errors.sol";
@@ -14,13 +15,23 @@ import "./libraries/Errors.sol";
 contract Contest is IContest, OwnableUpgradeable {
     using Counters for Counters.Counter;
 
+    address private _hubAddress;
     Counters.Counter private _counter;
     mapping(uint256 => DataTypes.ContestWave) private _waves;
     mapping(uint256 => DataTypes.ContestWaveParticipant[])
         private _waveParticipants;
 
-    function initialize() public initializer {
+    function initialize(address hubAddress) public initializer {
         __Ownable_init();
+        _hubAddress = hubAddress;
+    }
+
+    function getHubAddress() public view returns (address) {
+        return _hubAddress;
+    }
+
+    function setHubAddress(address hubAddress) public onlyOwner {
+        _hubAddress = hubAddress;
     }
 
     function startWave(uint endTimestamp, uint winnersNumber) public onlyOwner {
@@ -41,11 +52,14 @@ contract Contest is IContest, OwnableUpgradeable {
         emit Events.ContestWaveCreated(_counter.current(), wave);
     }
 
-    // TODO: Check that end date allows to close wave
     function closeWave(uint id, address[] memory winners) public onlyOwner {
         // Checks
         require(_waves[id].startTimestamp != 0, Errors.WAVE_IS_NOT_STARTED);
         require(_waves[id].closeTimestamp == 0, Errors.WAVE_IS_ALREADY_CLOSED);
+        require(
+            _waves[id].endTimestamp < block.timestamp,
+            Errors.WAVE_END_TIMESTAMP_HAS_NOT_COME
+        );
         require(
             winners.length == _waves[id].winnersNumber,
             Errors.NUMBER_OF_WINNERS_IS_INCORRECT
@@ -82,16 +96,23 @@ contract Contest is IContest, OwnableUpgradeable {
 
     /**
      * Update last wave participant by bet participants data.
-     *
-     * TODO: Check that data sended by bet contract
      */
     function processBetParticipants(
         address[] memory betParticipantAddresses,
         uint[] memory betParticipantWinnings
     ) public {
+        // Checks
+        require(
+            msg.sender == IHub(_hubAddress).getBetAddress(),
+            Errors.ONLY_BET_CONTRACT_CAN_BE_SENDER
+        );
         // Get and check last wave
         DataTypes.ContestWave storage wave = _waves[_counter.current()];
-        if (wave.startTimestamp == 0 || wave.closeTimestamp != 0) {
+        if (
+            wave.startTimestamp == 0 ||
+            wave.endTimestamp > block.timestamp ||
+            wave.closeTimestamp != 0
+        ) {
             return;
         }
         // Get last wave participants

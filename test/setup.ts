@@ -37,11 +37,11 @@ export const betContractParams = {
 };
 export const contestWaveParams = {
   one: {
-    endTimestamp: 1672099200,
+    endTimestamp: getEpochSeconds() + 2 * SECONDS_PER_DAY,
     winnersNumber: 3,
   },
   two: {
-    endTimestamp: 1676332800,
+    endTimestamp: getEpochSeconds() + 4 * SECONDS_PER_DAY,
     winnersNumber: 2,
   },
 };
@@ -143,7 +143,7 @@ before(async function () {
   );
   // Deploy contest contract
   contestContract = await new Contest__factory(deployer).deploy();
-  await contestContract.initialize();
+  await contestContract.initialize(hubContract.address);
   // Deploy usage contract
   usageContract = await new Usage__factory(deployer).deploy();
   await usageContract.initialize();

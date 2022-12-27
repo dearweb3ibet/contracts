@@ -49,10 +49,14 @@ library Errors {
         "Not found feed for symbol";
 
     // Contest contract
+    string internal constant ONLY_BET_CONTRACT_CAN_BE_SENDER =
+        "Only bet contract can be sender";
     string internal constant LAST_WAVE_IS_NOT_CLOSED =
         "Last wave is not closed";
     string internal constant WAVE_IS_NOT_STARTED = "Wave is not started";
     string internal constant WAVE_IS_ALREADY_CLOSED = "Wave is already closed";
+    string internal constant WAVE_END_TIMESTAMP_HAS_NOT_COME =
+        "Wave end timestamp has not come";
     string internal constant NUMBER_OF_WINNERS_IS_INCORRECT =
         "Number of winners is incorrect";
     string internal constant FAILED_TO_SEND_WINNING = "Failed to send winning";

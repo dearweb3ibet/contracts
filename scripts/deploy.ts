@@ -42,6 +42,13 @@ async function main() {
       ]
     );
     chainContracts.hub.proxy = contract.address;
+    if (chainContracts.contest.proxy !== "") {
+      console.log("⚡ Send hub address to contest contract");
+      await Contest__factory.connect(
+        chainContracts.contest.proxy,
+        deployer
+      ).setHubAddress(chainContracts.hub.proxy);
+    }
     if (chainContracts.bet.proxy !== "") {
       console.log("⚡ Send hub address to bet contract");
       await Bet__factory.connect(
@@ -101,7 +108,8 @@ async function main() {
     const contract = await deployProxyWithLogs(
       chain,
       chainContracts.contest.name,
-      new Contest__factory(deployer)
+      new Contest__factory(deployer),
+      [chainContracts.hub.proxy]
     );
     chainContracts.contest.proxy === contract.address;
     console.log("⚡ Send contract address to hub");
