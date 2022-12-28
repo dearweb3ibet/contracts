@@ -80,7 +80,7 @@ async function main() {
       chainContracts.betChecker.name,
       new BetChecker__factory(deployer)
     );
-    chainContracts.betChecker.proxy === contract.address;
+    chainContracts.betChecker.proxy = contract.address;
     console.log("⚡ Set contract feed addresses");
     await BetChecker__factory.connect(
       chainContracts.betChecker.proxy,
@@ -111,7 +111,7 @@ async function main() {
       new Contest__factory(deployer),
       [chainContracts.hub.proxy]
     );
-    chainContracts.contest.proxy === contract.address;
+    chainContracts.contest.proxy = contract.address;
     console.log("⚡ Send contract address to hub");
     await Hub__factory.connect(
       chainContracts.hub.proxy,
