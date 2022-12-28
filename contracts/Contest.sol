@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interfaces/IContest.sol";
 import "./interfaces/IHub.sol";
 import "./libraries/DataTypes.sol";
-import "./libraries/Events.sol";
 import "./libraries/Errors.sol";
 
 /**
@@ -14,6 +13,15 @@ import "./libraries/Errors.sol";
  */
 contract Contest is IContest, OwnableUpgradeable {
     using Counters for Counters.Counter;
+
+    event WaveCreated(uint id, DataTypes.ContestWave wave);
+    event WaveClosed(uint id, DataTypes.ContestWave wave);
+    event WaveParticipantSet(
+        uint id,
+        address indexed participantAccountAddress,
+        DataTypes.ContestWaveParticipant participant
+    );
+    event Received(address sender, uint value);
 
     address private _hubAddress;
     Counters.Counter private _counter;
@@ -49,7 +57,7 @@ contract Contest is IContest, OwnableUpgradeable {
         wave.startTimestamp = block.timestamp;
         wave.endTimestamp = endTimestamp;
         wave.winnersNumber = winnersNumber;
-        emit Events.ContestWaveCreated(_counter.current(), wave);
+        emit WaveCreated(_counter.current(), wave);
     }
 
     function closeWave(uint id, address[] memory winners) public onlyOwner {
@@ -69,7 +77,7 @@ contract Contest is IContest, OwnableUpgradeable {
         wave.closeTimestamp = block.timestamp;
         wave.winning = address(this).balance;
         wave.winners = winners;
-        emit Events.ContestWaveClosed(id, wave);
+        emit WaveClosed(id, wave);
         // Send winnings
         uint winningValue = address(this).balance / wave.winnersNumber;
         for (uint i = 0; i < winners.length; i++) {
@@ -137,7 +145,7 @@ contract Contest is IContest, OwnableUpgradeable {
                         waveParticipants[j].successes -
                         waveParticipants[j].failures;
                     // Emit event
-                    emit Events.ContestWaveParticipantSet(
+                    emit WaveParticipantSet(
                         _counter.current(),
                         waveParticipants[j].accountAddress,
                         waveParticipants[j]
@@ -156,7 +164,7 @@ contract Contest is IContest, OwnableUpgradeable {
                     );
                 waveParticipants.push(waveParticipant);
                 // Emit event
-                emit Events.ContestWaveParticipantSet(
+                emit WaveParticipantSet(
                     _counter.current(),
                     waveParticipant.accountAddress,
                     waveParticipant
@@ -166,6 +174,6 @@ contract Contest is IContest, OwnableUpgradeable {
     }
 
     receive() external payable {
-        emit Events.Received(msg.sender, msg.value);
+        emit Received(msg.sender, msg.value);
     }
 }

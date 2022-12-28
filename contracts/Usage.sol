@@ -2,12 +2,13 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "./libraries/Events.sol";
 
 /**
  * Contract to receive usage fee from the bet contract.
  */
 contract Usage is OwnableUpgradeable {
+    event Received(address sender, uint value);
+
     function initialize() public initializer {
         __Ownable_init();
     }
@@ -18,6 +19,6 @@ contract Usage is OwnableUpgradeable {
     }
 
     receive() external payable {
-        emit Events.Received(msg.sender, msg.value);
+        emit Received(msg.sender, msg.value);
     }
 }

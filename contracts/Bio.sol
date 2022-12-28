@@ -3,7 +3,6 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./libraries/Events.sol";
 import "./libraries/Errors.sol";
 
 /**
@@ -11,6 +10,8 @@ import "./libraries/Errors.sol";
  */
 contract Bio is ERC721URIStorageUpgradeable {
     using Counters for Counters.Counter;
+
+    event URISet(uint256 indexed tokenId, string tokenURI);
 
     Counters.Counter private _counter;
     mapping(address => uint256) private _owners;
@@ -64,7 +65,7 @@ contract Bio is ERC721URIStorageUpgradeable {
      */
     function _setURI(uint256 tokenId, string memory tokenURI) private {
         _setTokenURI(tokenId, tokenURI);
-        emit Events.URISet(tokenId, tokenURI);
+        emit URISet(tokenId, tokenURI);
     }
 
     /**

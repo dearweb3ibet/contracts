@@ -9,7 +9,6 @@ import "./interfaces/IBetChecker.sol";
 import "./interfaces/IHub.sol";
 import "./interfaces/IContest.sol";
 import "./libraries/DataTypes.sol";
-import "./libraries/Events.sol";
 import "./libraries/Errors.sol";
 import "./libraries/Constants.sol";
 
@@ -22,6 +21,14 @@ contract Bet is
     PausableUpgradeable
 {
     using Counters for Counters.Counter;
+
+    event ParamsSet(uint256 indexed tokenId, DataTypes.BetParams params);
+    event ParticipantSet(
+        uint256 indexed tokenId,
+        address indexed participantAccountAddress,
+        DataTypes.BetParticipant participant
+    );
+    event URISet(uint256 indexed tokenId, string tokenURI);
 
     address private _hubAddress;
     uint private _contestFeePercent;
@@ -95,15 +102,15 @@ contract Bet is
             false
         );
         _params[newTokenId] = tokenParams;
-        emit Events.BetParamsSet(newTokenId, tokenParams);
+        emit ParamsSet(newTokenId, tokenParams);
         // Add participant
         DataTypes.BetParticipant memory tokenParticipant = DataTypes
             .BetParticipant(block.timestamp, msg.sender, fee, true, false, 0);
         _participants[newTokenId].push(tokenParticipant);
-        emit Events.BetParticipantSet(newTokenId, msg.sender, tokenParticipant);
+        emit ParticipantSet(newTokenId, msg.sender, tokenParticipant);
         // Set uri
         _setTokenURI(newTokenId, uri);
-        emit Events.URISet(newTokenId, uri);
+        emit URISet(newTokenId, uri);
         // Return
         return newTokenId;
     }
@@ -143,7 +150,7 @@ contract Bet is
                 0
             );
         _participants[tokenId].push(tokenParticipant);
-        emit Events.BetParticipantSet(tokenId, msg.sender, tokenParticipant);
+        emit ParticipantSet(tokenId, msg.sender, tokenParticipant);
         // Update token params
         DataTypes.BetParams storage tokenParams = _params[tokenId];
         if (isFeeForSuccess) {
@@ -151,7 +158,7 @@ contract Bet is
         } else {
             tokenParams.feeForFailure += fee;
         }
-        emit Events.BetParamsSet(tokenId, tokenParams);
+        emit ParamsSet(tokenId, tokenParams);
     }
 
     function close(uint256 tokenId) public {
@@ -178,7 +185,7 @@ contract Bet is
         // Update token params
         tokenParams.isClosed = true;
         tokenParams.isSuccessful = isBetSuccessful;
-        emit Events.BetParamsSet(tokenId, tokenParams);
+        emit ParamsSet(tokenId, tokenParams);
         // Define fees for contest, usage and winners
         uint feeForContest;
         uint feeForUsage;
@@ -238,7 +245,7 @@ contract Bet is
                 // Save winning
                 participant.isWinner = isWinner;
                 participant.winning = winning;
-                emit Events.BetParticipantSet(
+                emit ParticipantSet(
                     tokenId,
                     participant.accountAddress,
                     participant
