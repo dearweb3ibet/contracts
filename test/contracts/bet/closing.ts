@@ -16,9 +16,7 @@ import {
   userOne,
   userOneAddress,
   userThree,
-  userThreeAddress,
   userTwo,
-  userTwoAddress,
 } from "../../setup";
 
 makeSuiteCleanRoom("Bet Closing", function () {
@@ -95,18 +93,6 @@ makeSuiteCleanRoom("Bet Closing", function () {
         feeForUsage,
       ]
     );
-    // Check contest wave participants
-    const contestLastWaveId = await contestContract.getCurrentCounter();
-    const contestParticipants = await contestContract.getWaveParticipants(
-      contestLastWaveId
-    );
-    for (let contestParticipant of contestParticipants) {
-      if (contestParticipant.accountAddress === userOneAddress) {
-        expect(contestParticipant.successes).be.eq(BigNumber.from(0));
-        expect(contestParticipant.failures).be.eq(BigNumber.from(1));
-        expect(contestParticipant.variance).to.be.eq(BigNumber.from(-1));
-      }
-    }
   });
 
   it("User should be able to close a successed bet with one participant and participant should get back fee and receive contest points", async function () {
@@ -152,18 +138,6 @@ makeSuiteCleanRoom("Bet Closing", function () {
         ethers.constants.Zero,
       ]
     );
-    // Check contest wave participants
-    const contestLastWaveId = await contestContract.getCurrentCounter();
-    const contestParticipants = await contestContract.getWaveParticipants(
-      contestLastWaveId
-    );
-    for (let contestParticipant of contestParticipants) {
-      if (contestParticipant.accountAddress === userOneAddress) {
-        expect(contestParticipant.successes).be.eq(BigNumber.from(1));
-        expect(contestParticipant.failures).be.eq(BigNumber.from(0));
-        expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
-      }
-    }
   });
 
   it("User should be able to close a failed bet with three participants and participants should receive winning and contest points", async function () {
@@ -246,28 +220,6 @@ makeSuiteCleanRoom("Bet Closing", function () {
         feeForUsage,
       ]
     );
-    // Check contest wave participants
-    const contestLastWaveId = await contestContract.getCurrentCounter();
-    const contestParticipants = await contestContract.getWaveParticipants(
-      contestLastWaveId
-    );
-    for (let contestParticipant of contestParticipants) {
-      if (contestParticipant.accountAddress === userOneAddress) {
-        expect(contestParticipant.successes).be.eq(BigNumber.from(0));
-        expect(contestParticipant.failures).be.eq(BigNumber.from(1));
-        expect(contestParticipant.variance).to.be.eq(BigNumber.from(-1));
-      }
-      if (contestParticipant.accountAddress === userTwoAddress) {
-        expect(contestParticipant.successes).be.eq(BigNumber.from(1));
-        expect(contestParticipant.failures).be.eq(BigNumber.from(0));
-        expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
-      }
-      if (contestParticipant.accountAddress === userThreeAddress) {
-        expect(contestParticipant.successes).be.eq(BigNumber.from(1));
-        expect(contestParticipant.failures).be.eq(BigNumber.from(0));
-        expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
-      }
-    }
   });
 
   it("User should be able to close a failed bet with three participants and participants should receive winning and contest points", async function () {
@@ -346,27 +298,5 @@ makeSuiteCleanRoom("Bet Closing", function () {
         feeForUsage,
       ]
     );
-    // Check contest wave participants
-    const contestLastWaveId = await contestContract.getCurrentCounter();
-    const contestParticipants = await contestContract.getWaveParticipants(
-      contestLastWaveId
-    );
-    for (let contestParticipant of contestParticipants) {
-      if (contestParticipant.accountAddress === userOneAddress) {
-        expect(contestParticipant.successes).be.eq(BigNumber.from(1));
-        expect(contestParticipant.failures).be.eq(BigNumber.from(0));
-        expect(contestParticipant.variance).to.be.eq(BigNumber.from(1));
-      }
-      if (contestParticipant.accountAddress === userTwoAddress) {
-        expect(contestParticipant.successes).be.eq(BigNumber.from(0));
-        expect(contestParticipant.failures).be.eq(BigNumber.from(1));
-        expect(contestParticipant.variance).to.be.eq(BigNumber.from(-1));
-      }
-      if (contestParticipant.accountAddress === userThreeAddress) {
-        expect(contestParticipant.successes).be.eq(BigNumber.from(0));
-        expect(contestParticipant.failures).be.eq(BigNumber.from(1));
-        expect(contestParticipant.variance).to.be.eq(BigNumber.from(-1));
-      }
-    }
   });
 });

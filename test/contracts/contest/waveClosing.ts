@@ -8,40 +8,57 @@ import {
   contestWaveParams,
   deployer,
   makeSuiteCleanRoom,
+  userOne,
   userOneAddress,
-  userThreeAddress,
   userTwoAddress,
 } from "../../setup";
 
 makeSuiteCleanRoom("Contest Wave Closing", function () {
-  beforeEach(async function () {
-    // Increase network time
-    await time.increase(2 * SECONDS_PER_DAY);
-    // Close last wave
-    const lastWaveId = await contestContract.getCurrentCounter();
-    await contestContract
-      .connect(deployer)
-      .closeWave(lastWaveId, [
-        userOneAddress,
-        userTwoAddress,
-        userThreeAddress,
-      ]);
-  });
-
-  it("Deployer should fail to close already closed last wave", async function () {
-    // Check last wave
-    const lastWaveId = await contestContract.getCurrentCounter();
-    const wave = await contestContract.getWave(lastWaveId);
-    expect(wave.closeTimestamp).to.be.not.eq(ethers.constants.Zero);
-    // Close wave
+  it("User should fail to close wave", async function () {
+    // Start wave
     await expect(
       contestContract
         .connect(deployer)
-        .closeWave(lastWaveId, [
-          userOneAddress,
-          userTwoAddress,
-          userThreeAddress,
-        ])
+        .startWave(
+          contestWaveParams.one.endTimestamp,
+          contestWaveParams.one.winnersNumber
+        )
+    ).to.be.not.reverted;
+    // Define last wave id
+    const lastWaveId = await contestContract.getCurrentCounter();
+    // Close wave by user
+    await expect(
+      contestContract
+        .connect(userOne)
+        .closeWave(lastWaveId, [userOneAddress, userTwoAddress])
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+  });
+
+  it("Deployer should fail to close already closed last wave", async function () {
+    // Start wave
+    await expect(
+      contestContract
+        .connect(deployer)
+        .startWave(
+          contestWaveParams.one.endTimestamp,
+          contestWaveParams.one.winnersNumber
+        )
+    ).to.be.not.reverted;
+    // Define last wave id
+    const lastWaveId = await contestContract.getCurrentCounter();
+    // Increase network time
+    await time.increase(4 * SECONDS_PER_DAY);
+    // Close wave (try one)
+    await expect(
+      contestContract
+        .connect(deployer)
+        .closeWave(lastWaveId, [userOneAddress, userTwoAddress])
+    ).to.be.not.reverted;
+    // Close wave (try two)
+    await expect(
+      contestContract
+        .connect(deployer)
+        .closeWave(lastWaveId, [userOneAddress, userTwoAddress])
     ).to.be.revertedWith("Wave is already closed");
   });
 
@@ -51,8 +68,8 @@ makeSuiteCleanRoom("Contest Wave Closing", function () {
       contestContract
         .connect(deployer)
         .startWave(
-          contestWaveParams.two.endTimestamp,
-          contestWaveParams.two.winnersNumber
+          contestWaveParams.one.endTimestamp,
+          contestWaveParams.one.winnersNumber
         )
     ).to.be.not.reverted;
     // Define last wave id
@@ -71,8 +88,8 @@ makeSuiteCleanRoom("Contest Wave Closing", function () {
       contestContract
         .connect(deployer)
         .startWave(
-          contestWaveParams.two.endTimestamp,
-          contestWaveParams.two.winnersNumber
+          contestWaveParams.one.endTimestamp,
+          contestWaveParams.one.winnersNumber
         )
     ).to.be.not.reverted;
     // Define last wave id
@@ -80,7 +97,7 @@ makeSuiteCleanRoom("Contest Wave Closing", function () {
     // Define contest distibution
     const contestBalance = BigNumber.from("100000000000000000");
     const contestWinningValue = contestBalance.div(
-      BigNumber.from(contestWaveParams.two.winnersNumber)
+      BigNumber.from(contestWaveParams.one.winnersNumber)
     );
     // Send ethers to contest contract
     await deployer.sendTransaction({
@@ -88,7 +105,7 @@ makeSuiteCleanRoom("Contest Wave Closing", function () {
       value: contestBalance,
     });
     // Increase network time
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(4 * SECONDS_PER_DAY);
     // Close wave
     await expect(
       contestContract
@@ -98,11 +115,14 @@ makeSuiteCleanRoom("Contest Wave Closing", function () {
       [contestContract.address, userOneAddress, userTwoAddress],
       [
         contestWinningValue
-          .mul(contestWaveParams.two.winnersNumber)
+          .mul(contestWaveParams.one.winnersNumber)
           .mul(ethers.constants.NegativeOne),
         contestWinningValue,
         contestWinningValue,
       ]
     );
+    // Check last wave
+    const lastWave = await contestContract.getWave(lastWaveId);
+    expect(lastWave.closeTimestamp).to.be.not.eq(ethers.constants.Zero);
   });
 });

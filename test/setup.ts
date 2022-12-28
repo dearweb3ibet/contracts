@@ -40,12 +40,12 @@ export const betContractParams = {
 };
 export const contestWaveParams = {
   one: {
-    endTimestamp: getEpochSeconds() + 2 * SECONDS_PER_DAY,
-    winnersNumber: 3,
-  },
-  two: {
     endTimestamp: getEpochSeconds() + 4 * SECONDS_PER_DAY,
     winnersNumber: 2,
+  },
+  two: {
+    endTimestamp: getEpochSeconds() + 2 * SECONDS_PER_HOUR,
+    winnersNumber: 1,
   },
 };
 
@@ -172,13 +172,5 @@ before(async function () {
   ).to.be.not.reverted;
   await expect(
     hubContract.setBioAddress(bioContract.address)
-  ).to.be.not.reverted;
-
-  // Start contest wave
-  await expect(
-    contestContract.startWave(
-      contestWaveParams.one.endTimestamp,
-      contestWaveParams.one.winnersNumber
-    )
   ).to.be.not.reverted;
 });

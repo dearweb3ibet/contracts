@@ -109,7 +109,7 @@ contract Contest is IContest, OwnableUpgradeable {
         DataTypes.ContestWave storage wave = _waves[_counter.current()];
         if (
             wave.startTimestamp == 0 ||
-            wave.endTimestamp > block.timestamp ||
+            wave.endTimestamp < block.timestamp ||
             wave.closeTimestamp != 0
         ) {
             return;
