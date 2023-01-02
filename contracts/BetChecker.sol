@@ -288,15 +288,13 @@ contract BetChecker is IBetChecker, OwnableUpgradeable {
         );
         // Compare input prices with day prices
         bool result = false;
-        int fixedMinPrice = minPrice * 10 ** 8;
-        int fixedMaxPrice = maxPrice * 10 ** 8;
-        if (fixedMinPrice <= dayMinPrice && fixedMaxPrice >= dayMinPrice) {
+        if (minPrice <= dayMinPrice && maxPrice >= dayMinPrice) {
             result = true;
         }
-        if (fixedMinPrice >= dayMinPrice && fixedMaxPrice <= dayMaxPrice) {
+        if (minPrice >= dayMinPrice && maxPrice <= dayMaxPrice) {
             result = true;
         }
-        if (fixedMinPrice <= dayMaxPrice && fixedMaxPrice >= dayMaxPrice) {
+        if (minPrice <= dayMaxPrice && maxPrice >= dayMaxPrice) {
             result = true;
         }
         // Return

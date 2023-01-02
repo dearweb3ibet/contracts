@@ -37,9 +37,9 @@ export const deployedContracts: {
     },
     betChecker: {
       name: "Bet Checker",
-      proxy: "0x1CB532A5fb936AF408a21eC94607552A0d0cAa57",
+      proxy: "0x7b10aE0a63B0740acF22d5672f373fCefD4f3d42",
       proxyAdmin: "0x0d3b20f33e95Cf06f05b9ffD0b34faEED67baCd5",
-      impl: "0x6b5c040F1507a81BDE773A64Bb73066f2F26f9c1",
+      impl: "0x756Ee01a3453698a49C1297ACA5D4E086bEbA7f9",
     },
     contest: {
       name: "Contest",
