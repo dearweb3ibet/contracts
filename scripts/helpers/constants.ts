@@ -57,7 +57,7 @@ export const deployedContracts: {
       name: "Bet",
       proxy: "0xE2F5357435c7F4d9930eD69706EC1fE1A802AfA8",
       proxyAdmin: "0x0d3b20f33e95Cf06f05b9ffD0b34faEED67baCd5",
-      impl: "0x48f3701f8ba00E5ff2aE1d2A4C5421451d7d37B4",
+      impl: "0xAe53db067b9359EEA2321dBCdfc18820e91572ce",
     },
     bio: {
       name: "Bio",

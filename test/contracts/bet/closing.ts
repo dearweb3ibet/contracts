@@ -20,7 +20,7 @@ import {
 } from "../../setup";
 
 makeSuiteCleanRoom("Bet Closing", function () {
-  it("User should fail to close a bet with not expired target timestamp", async function () {
+  it("User should fail to close a bet when no more than 24 hours have passed since target timestamp", async function () {
     // Create bet by user one
     await expect(
       betContract
@@ -43,7 +43,7 @@ makeSuiteCleanRoom("Bet Closing", function () {
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
-    ).to.be.revertedWith("Target timestamp has not come");
+    ).to.be.revertedWith("Must be more than 24 hours after target timestamp");
   });
 
   it("User should be able to close a failed bet with one participant and participant should receive contest points", async function () {
@@ -75,7 +75,7 @@ makeSuiteCleanRoom("Bet Closing", function () {
     // Get created bet id
     const createdBetId = await betContract.connect(userOne).getCurrentCounter();
     // Increase network time
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(3 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
@@ -120,7 +120,7 @@ makeSuiteCleanRoom("Bet Closing", function () {
     // Get created bet id
     const createdBetId = await betContract.connect(userOne).getCurrentCounter();
     // Increase network time
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(3 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
@@ -192,7 +192,7 @@ makeSuiteCleanRoom("Bet Closing", function () {
         })
     ).to.be.not.reverted;
     // Increase network time
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(3 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
@@ -272,7 +272,7 @@ makeSuiteCleanRoom("Bet Closing", function () {
         })
     ).to.be.not.reverted;
     // Increase network time
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(3 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)

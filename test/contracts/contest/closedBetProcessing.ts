@@ -66,7 +66,7 @@ makeSuiteCleanRoom("Contest Closed Bet Processing", function () {
     // Define created bet id
     const createdBetId = await betContract.connect(userOne).getCurrentCounter();
     // Increase network time to close bet
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(3 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
@@ -108,7 +108,7 @@ makeSuiteCleanRoom("Contest Closed Bet Processing", function () {
     // Get created bet id
     const createdBetId = await betContract.connect(userOne).getCurrentCounter();
     // Increase network time to close bet
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(3 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
@@ -171,7 +171,7 @@ makeSuiteCleanRoom("Contest Closed Bet Processing", function () {
         })
     ).to.be.not.reverted;
     // Increase network time to close bet
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(3 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)

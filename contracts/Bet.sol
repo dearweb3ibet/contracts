@@ -167,8 +167,9 @@ contract Bet is
         require(_exists(tokenId), Errors.TOKEN_DOES_NOT_EXIST);
         require(!_params[tokenId].isClosed, Errors.BET_IS_CLOSED);
         require(
-            _params[tokenId].targetTimestamp < block.timestamp,
-            Errors.TARGET_TIMESTAMP_HAS_NOT_COME
+            _params[tokenId].targetTimestamp + Constants.SECONDS_PER_DAY <
+                block.timestamp,
+            Errors.MUST_BE_MORE_THAN_24_HOURS_AFTER_TARGET_TIMESTAMP
         );
         // Load token params
         DataTypes.BetParams storage tokenParams = _params[tokenId];

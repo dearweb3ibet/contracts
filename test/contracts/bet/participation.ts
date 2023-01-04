@@ -35,7 +35,7 @@ makeSuiteCleanRoom("Bet Participation", function () {
     // Get created bet id
     const createdBetId = await betContract.connect(userOne).getCurrentCounter();
     // Increase network time
-    await time.increase(2 * SECONDS_PER_DAY);
+    await time.increase(3 * SECONDS_PER_DAY);
     // Close bet
     await expect(
       betContract.connect(userOne).close(createdBetId)
